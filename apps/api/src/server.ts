@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { loadConfig, type Config } from './config.js';
 import { connectDb } from './db.js';
 import { healthRoutes } from './routes/health.js';
+import authPlugin from './plugins/auth.js';
 
 export interface BuildOptions {
   skipDb?: boolean;
@@ -31,6 +32,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
     }
   }
 
+  await app.register(authPlugin);
   await app.register(healthRoutes);
   return app;
 }
