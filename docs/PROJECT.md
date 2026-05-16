@@ -234,3 +234,4 @@ Environment variables live in `.env` (gitignored). `.env.example` documents the 
 
 - *2026-05-16* — Initial project doc. v0 walking-skeleton scope defined.
 - *2026-05-17* — v0 walking skeleton implemented: monorepo scaffold, shared `UserSchema`, Fastify API with stub auth (signed cookies), React/Tailwind/shadcn web app, Docker Compose bring-up. Acceptance flow passes from `docker compose down -v` → `docker compose up` → seeded login → `/profile` → logout.
+- *2026-05-17* — Roadmaps backend shipped: shared Zod schemas, embedded Mongoose model, 13 REST endpoints under `/api/roadmaps`. Frontend implementation pending via frontend-design pass.
