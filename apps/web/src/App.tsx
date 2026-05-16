@@ -1,7 +1,40 @@
+import { Route, Routes } from 'react-router-dom';
+import { Navbar } from '@/components/Navbar';
+import { RequireAuth } from '@/components/RequireAuth';
+import Dashboard from '@/pages/Dashboard';
+import Login from '@/pages/Login';
+import Profile from '@/pages/Profile';
+
+function Protected({ children }: { children: React.ReactNode }) {
+  return (
+    <RequireAuth>
+      <Navbar />
+      {children}
+    </RequireAuth>
+  );
+}
+
 export default function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-900">
-      <h1 className="text-3xl font-semibold">Pathforge</h1>
-    </div>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={
+          <Protected>
+            <Dashboard />
+          </Protected>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <Protected>
+            <Profile />
+          </Protected>
+        }
+      />
+      <Route path="*" element={<Protected><Dashboard /></Protected>} />
+    </Routes>
   );
 }
