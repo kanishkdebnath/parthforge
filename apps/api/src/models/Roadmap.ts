@@ -31,7 +31,7 @@ const milestoneSchema = new Schema(
 
 const roadmapSchema = new Schema(
   {
-    userId: { type: Types.ObjectId, ref: 'User', required: true, index: true },
+    userId: { type: Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
     description: String,
     deadline: Date,
@@ -41,14 +41,17 @@ const roadmapSchema = new Schema(
   { timestamps: true }
 );
 
-// Compound index for the dominant list query: find user's active (or archived)
-// roadmaps. CLAUDE.md rule: every compound index starts with userId.
+// Compound index covers the dominant list query (find user's active or
+// archived roadmaps) AND single-field userId queries via the leftmost-prefix
+// rule. CLAUDE.md rule: every compound index starts with userId.
 roadmapSchema.index({ userId: 1, archived: 1 });
 
 // InferSchemaType does NOT surface timestamps even with `timestamps: true`, so
-// declare them explicitly (same pattern as UserDoc in apps/api/src/models/User.ts).
+// declare them explicitly. `_id: string` matches the UserDoc pattern from v0;
+// the serializer in Task 3 calls String(...) at every level to bridge the
+// runtime ObjectId values.
 export type RoadmapDoc = InferSchemaType<typeof roadmapSchema> & {
-  _id: Types.ObjectId;
+  _id: string;
   createdAt: Date;
   updatedAt: Date;
 };
