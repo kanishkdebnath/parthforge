@@ -49,6 +49,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.get(
     '/api/auth/me',
     { preHandler: [app.authenticate] },
-    async (request) => request.user
+    async (request, reply) => {
+      if (!request.user) {
+        // Unreachable in practice — `authenticate` preHandler 401s before this runs —
+        // but the explicit guard keeps the response type free of `undefined`.
+        return reply.code(401).send({ error: 'Unauthorized' });
+      }
+      return request.user;
+    }
   );
 }

@@ -13,7 +13,9 @@ export const UserSchema = z.object({
 export type User = z.infer<typeof UserSchema>;
 
 export const LoginRequestSchema = z.object({
-  userId: z.string().min(1),
+  // 24-char lowercase hex — Mongo ObjectId. Validates at the boundary so the
+  // login route never hands a malformed value to Mongoose.findById.
+  userId: z.string().regex(/^[a-f\d]{24}$/i),
 });
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
