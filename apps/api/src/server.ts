@@ -25,6 +25,10 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
 
   if (!opts.skipDb) {
     await connectDb(config.MONGO_URL);
+    if (config.NODE_ENV === 'development') {
+      const { seedDevUsersIfEmpty } = await import('./seed.js');
+      await seedDevUsersIfEmpty();
+    }
   }
 
   await app.register(healthRoutes);
