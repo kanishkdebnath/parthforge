@@ -115,7 +115,7 @@ export async function roadmapsRoutes(app: FastifyInstance): Promise<void> {
         { new: true }
       ).lean();
       if (!doc) return reply.code(404).send({ error: 'Not found' });
-      return serializeRoadmap(doc as never);
+      return reply.code(201).send(serializeRoadmap(doc as never));
     }
   );
 
@@ -144,10 +144,14 @@ export async function roadmapsRoutes(app: FastifyInstance): Promise<void> {
       if (Object.keys(unset).length > 0) update.$unset = unset;
       if (Object.keys(update).length === 0) {
         // No-op patch — still return the doc to keep the contract.
-        const doc = await RoadmapModel.findOne({ _id: id, userId }).lean();
+        // Use the same milestone-id filter as the mutating branch so 404
+        // logic stays unified across both paths.
+        const doc = await RoadmapModel.findOne({
+          _id: id,
+          userId,
+          'milestones._id': new Types.ObjectId(mid),
+        }).lean();
         if (!doc) return reply.code(404).send({ error: 'Not found' });
-        if (!doc.milestones.some((m) => String(m._id) === mid))
-          return reply.code(404).send({ error: 'Not found' });
         return serializeRoadmap(doc as never);
       }
 
@@ -202,7 +206,7 @@ export async function roadmapsRoutes(app: FastifyInstance): Promise<void> {
       const reordered = parsed.data.ids.map((mid) => byId.get(mid)!);
       doc.milestones.splice(0, doc.milestones.length, ...reordered);
       await doc.save();
-      const fresh = await RoadmapModel.findById(id).lean();
+      const fresh = await RoadmapModel.findOne({ _id: id, userId }).lean();
       return serializeRoadmap(fresh as never);
     }
   );
