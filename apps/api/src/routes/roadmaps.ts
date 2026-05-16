@@ -5,10 +5,16 @@ import {
   UpdateRoadmapRequestSchema,
   CreateMilestoneRequestSchema,
   UpdateMilestoneRequestSchema,
+  CreateStepRequestSchema,
+  UpdateStepRequestSchema,
   ReorderRequestSchema,
 } from '@pathforge/shared';
 import { RoadmapModel } from '../models/Roadmap.js';
-import { serializeRoadmap, validateReorderIds } from '../lib/roadmap-helpers.js';
+import {
+  recomputeMilestoneCompletedAt,
+  serializeRoadmap,
+  validateReorderIds,
+} from '../lib/roadmap-helpers.js';
 
 const OBJECT_ID = /^[a-f\d]{24}$/i;
 
@@ -205,6 +211,133 @@ export async function roadmapsRoutes(app: FastifyInstance): Promise<void> {
       // Splice in the new order in-place so Mongoose tracks the dirty state.
       const reordered = parsed.data.ids.map((mid) => byId.get(mid)!);
       doc.milestones.splice(0, doc.milestones.length, ...reordered);
+      await doc.save();
+      const fresh = await RoadmapModel.findOne({ _id: id, userId }).lean();
+      return serializeRoadmap(fresh as never);
+    }
+  );
+
+  // POST /api/roadmaps/:id/milestones/:mid/steps
+  app.post(
+    '/api/roadmaps/:id/milestones/:mid/steps',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id, mid } = request.params as { id: string; mid: string };
+      if (!isValidId(id) || !isValidId(mid)) return reply.code(404).send({ error: 'Not found' });
+      const parsed = CreateStepRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+
+      const doc = await RoadmapModel.findOne({ _id: id, userId });
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      const milestone = doc.milestones.id(new Types.ObjectId(mid));
+      if (!milestone) return reply.code(404).send({ error: 'Not found' });
+
+      milestone.steps.push({
+        title: parsed.data.title,
+        links: parsed.data.links ?? [],
+        completed: false,
+      } as never);
+
+      // Adding a step that isn't completed cannot make a milestone complete,
+      // but if the milestone was previously "all steps completed" (now stale
+      // because we just added an incomplete step), clear completedAt.
+      milestone.completedAt = recomputeMilestoneCompletedAt(milestone.steps);
+
+      await doc.save();
+      const fresh = await RoadmapModel.findOne({ _id: id, userId }).lean();
+      return reply.code(201).send(serializeRoadmap(fresh as never));
+    }
+  );
+
+  // PATCH /api/roadmaps/:id/milestones/:mid/steps/:sid
+  app.patch(
+    '/api/roadmaps/:id/milestones/:mid/steps/:sid',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id, mid, sid } = request.params as { id: string; mid: string; sid: string };
+      if (!isValidId(id) || !isValidId(mid) || !isValidId(sid))
+        return reply.code(404).send({ error: 'Not found' });
+      const parsed = UpdateStepRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+
+      const doc = await RoadmapModel.findOne({ _id: id, userId });
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      const milestone = doc.milestones.id(new Types.ObjectId(mid));
+      if (!milestone) return reply.code(404).send({ error: 'Not found' });
+      const step = milestone.steps.id(new Types.ObjectId(sid));
+      if (!step) return reply.code(404).send({ error: 'Not found' });
+
+      if (parsed.data.title !== undefined) step.title = parsed.data.title;
+      if (parsed.data.links !== undefined) step.set('links', parsed.data.links);
+      if (parsed.data.completed !== undefined) {
+        const prev = step.completed;
+        step.completed = parsed.data.completed;
+        if (parsed.data.completed && !prev) step.completedAt = new Date();
+        if (!parsed.data.completed && prev) step.completedAt = undefined;
+      }
+
+      milestone.completedAt = recomputeMilestoneCompletedAt(milestone.steps);
+
+      await doc.save();
+      const fresh = await RoadmapModel.findOne({ _id: id, userId }).lean();
+      return serializeRoadmap(fresh as never);
+    }
+  );
+
+  // DELETE /api/roadmaps/:id/milestones/:mid/steps/:sid
+  app.delete(
+    '/api/roadmaps/:id/milestones/:mid/steps/:sid',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id, mid, sid } = request.params as { id: string; mid: string; sid: string };
+      if (!isValidId(id) || !isValidId(mid) || !isValidId(sid))
+        return reply.code(404).send({ error: 'Not found' });
+      const userId = request.user!._id;
+
+      const doc = await RoadmapModel.findOne({ _id: id, userId });
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      const milestone = doc.milestones.id(new Types.ObjectId(mid));
+      if (!milestone) return reply.code(404).send({ error: 'Not found' });
+      const step = milestone.steps.id(new Types.ObjectId(sid));
+      if (!step) return reply.code(404).send({ error: 'Not found' });
+
+      step.deleteOne();
+      milestone.completedAt = recomputeMilestoneCompletedAt(milestone.steps);
+
+      await doc.save();
+      const fresh = await RoadmapModel.findOne({ _id: id, userId }).lean();
+      return serializeRoadmap(fresh as never);
+    }
+  );
+
+  // PUT /api/roadmaps/:id/milestones/:mid/steps/reorder
+  app.put(
+    '/api/roadmaps/:id/milestones/:mid/steps/reorder',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id, mid } = request.params as { id: string; mid: string };
+      if (!isValidId(id) || !isValidId(mid)) return reply.code(404).send({ error: 'Not found' });
+      const parsed = ReorderRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+
+      const doc = await RoadmapModel.findOne({ _id: id, userId });
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      const milestone = doc.milestones.id(new Types.ObjectId(mid));
+      if (!milestone) return reply.code(404).send({ error: 'Not found' });
+
+      const existing = milestone.steps.map((s) => String(s._id));
+      const err = validateReorderIds(existing, parsed.data.ids);
+      if (err) return reply.code(400).send({ error: err });
+
+      const byId = new Map(milestone.steps.map((s) => [String(s._id), s]));
+      // splice replaces the array in place; Mongoose's DocumentArray.set is
+      // single-index, so this is the correct way to swap the whole array.
+      const reordered = parsed.data.ids.map((sid) => byId.get(sid)!);
+      milestone.steps.splice(0, milestone.steps.length, ...(reordered as never[]));
+
       await doc.save();
       const fresh = await RoadmapModel.findOne({ _id: id, userId }).lean();
       return serializeRoadmap(fresh as never);
