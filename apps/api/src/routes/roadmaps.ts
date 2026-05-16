@@ -1,10 +1,14 @@
 import type { FastifyInstance } from 'fastify';
+import { Types } from 'mongoose';
 import {
   CreateRoadmapRequestSchema,
   UpdateRoadmapRequestSchema,
+  CreateMilestoneRequestSchema,
+  UpdateMilestoneRequestSchema,
+  ReorderRequestSchema,
 } from '@pathforge/shared';
 import { RoadmapModel } from '../models/Roadmap.js';
-import { serializeRoadmap } from '../lib/roadmap-helpers.js';
+import { serializeRoadmap, validateReorderIds } from '../lib/roadmap-helpers.js';
 
 const OBJECT_ID = /^[a-f\d]{24}$/i;
 
@@ -87,4 +91,119 @@ export async function roadmapsRoutes(app: FastifyInstance): Promise<void> {
     if (result.deletedCount === 0) return reply.code(404).send({ error: 'Not found' });
     return { ok: true };
   });
+
+  // POST /api/roadmaps/:id/milestones
+  app.post(
+    '/api/roadmaps/:id/milestones',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
+      const parsed = CreateMilestoneRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+      const milestone = {
+        _id: new Types.ObjectId(),
+        title: parsed.data.title,
+        description: parsed.data.description,
+        deadline: parsed.data.deadline,
+        steps: [],
+      };
+      const doc = await RoadmapModel.findOneAndUpdate(
+        { _id: id, userId },
+        { $push: { milestones: milestone } },
+        { new: true }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeRoadmap(doc as never);
+    }
+  );
+
+  // PATCH /api/roadmaps/:id/milestones/:mid
+  app.patch(
+    '/api/roadmaps/:id/milestones/:mid',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id, mid } = request.params as { id: string; mid: string };
+      if (!isValidId(id) || !isValidId(mid)) return reply.code(404).send({ error: 'Not found' });
+      const parsed = UpdateMilestoneRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+
+      const set: Record<string, unknown> = {};
+      const unset: Record<string, ''> = {};
+      if (parsed.data.title !== undefined) set['milestones.$[m].title'] = parsed.data.title;
+      if (parsed.data.description !== undefined)
+        set['milestones.$[m].description'] = parsed.data.description;
+      if (parsed.data.deadline === null) unset['milestones.$[m].deadline'] = '';
+      else if (parsed.data.deadline !== undefined)
+        set['milestones.$[m].deadline'] = parsed.data.deadline;
+
+      const update: Record<string, unknown> = {};
+      if (Object.keys(set).length > 0) update.$set = set;
+      if (Object.keys(unset).length > 0) update.$unset = unset;
+      if (Object.keys(update).length === 0) {
+        // No-op patch — still return the doc to keep the contract.
+        const doc = await RoadmapModel.findOne({ _id: id, userId }).lean();
+        if (!doc) return reply.code(404).send({ error: 'Not found' });
+        if (!doc.milestones.some((m) => String(m._id) === mid))
+          return reply.code(404).send({ error: 'Not found' });
+        return serializeRoadmap(doc as never);
+      }
+
+      const doc = await RoadmapModel.findOneAndUpdate(
+        { _id: id, userId, 'milestones._id': new Types.ObjectId(mid) },
+        update,
+        { new: true, arrayFilters: [{ 'm._id': new Types.ObjectId(mid) }] }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeRoadmap(doc as never);
+    }
+  );
+
+  // DELETE /api/roadmaps/:id/milestones/:mid
+  app.delete(
+    '/api/roadmaps/:id/milestones/:mid',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id, mid } = request.params as { id: string; mid: string };
+      if (!isValidId(id) || !isValidId(mid)) return reply.code(404).send({ error: 'Not found' });
+      const userId = request.user!._id;
+      const doc = await RoadmapModel.findOneAndUpdate(
+        { _id: id, userId, 'milestones._id': new Types.ObjectId(mid) },
+        { $pull: { milestones: { _id: new Types.ObjectId(mid) } } },
+        { new: true }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeRoadmap(doc as never);
+    }
+  );
+
+  // PUT /api/roadmaps/:id/milestones/reorder
+  app.put(
+    '/api/roadmaps/:id/milestones/reorder',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
+      const parsed = ReorderRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+
+      const doc = await RoadmapModel.findOne({ _id: id, userId });
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+
+      const existing = doc.milestones.map((m) => String(m._id));
+      const err = validateReorderIds(existing, parsed.data.ids);
+      if (err) return reply.code(400).send({ error: err });
+
+      const byId = new Map(doc.milestones.map((m) => [String(m._id), m]));
+      // Splice in the new order in-place so Mongoose tracks the dirty state.
+      const reordered = parsed.data.ids.map((mid) => byId.get(mid)!);
+      doc.milestones.splice(0, doc.milestones.length, ...reordered);
+      await doc.save();
+      const fresh = await RoadmapModel.findById(id).lean();
+      return serializeRoadmap(fresh as never);
+    }
+  );
 }
