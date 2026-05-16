@@ -1,8 +1,10 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
 import { loadConfig, type Config } from './config.js';
 import { connectDb } from './db.js';
 import { healthRoutes } from './routes/health.js';
 import authPlugin from './plugins/auth.js';
+import { authRoutes } from './routes/auth.js';
 
 export interface BuildOptions {
   skipDb?: boolean;
@@ -32,8 +34,13 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
     }
   }
 
+  await app.register(cors, {
+    origin: config.FRONTEND_ORIGIN,
+    credentials: true,
+  });
   await app.register(authPlugin);
   await app.register(healthRoutes);
+  await app.register(authRoutes);
   return app;
 }
 
