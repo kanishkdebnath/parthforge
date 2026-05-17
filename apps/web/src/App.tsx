@@ -4,6 +4,8 @@ import { RequireAuth } from '@/components/RequireAuth';
 import Dashboard from '@/pages/Dashboard';
 import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
+import RoadmapsListPage from '@/pages/RoadmapsListPage';
+import RoadmapDetailPage from '@/pages/RoadmapDetailPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (
@@ -18,22 +20,11 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route
-        path="/"
-        element={
-          <Protected>
-            <Dashboard />
-          </Protected>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <Protected>
-            <Profile />
-          </Protected>
-        }
-      />
+      <Route path="/" element={<Protected><Dashboard /></Protected>} />
+      <Route path="/profile" element={<Protected><Profile /></Protected>} />
+      <Route path="/roadmaps" element={<Protected><RoadmapsListPage /></Protected>} />
+      <Route path="/roadmaps/archived" element={<Protected><RoadmapsListPage archived /></Protected>} />
+      <Route path="/roadmaps/:id" element={<Protected><RoadmapDetailPage /></Protected>} />
       <Route path="*" element={<Protected><Dashboard /></Protected>} />
     </Routes>
   );
