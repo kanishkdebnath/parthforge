@@ -25,11 +25,22 @@ export function Navbar() {
     .toUpperCase();
 
   return (
-    <header className="border-b bg-background">
-      <div className="container flex h-14 items-center justify-between">
-        <Link to="/" className="text-lg font-semibold tracking-tight">
-          Pathforge
-        </Link>
+    <header className="border-b border-slate-200 bg-background">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-8">
+          <Link
+            to="/"
+            className="font-display text-2xl font-semibold tracking-tight text-slate-900"
+            style={{ fontVariationSettings: '"opsz" 144' }}
+          >
+            Pathforge
+          </Link>
+          <nav className="flex items-center gap-5 text-sm text-slate-600">
+            <Link to="/roadmaps" className="hover:text-slate-900 transition-colors">
+              Roadmaps
+            </Link>
+          </nav>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
             <Avatar className="h-8 w-8">

@@ -28,3 +28,39 @@
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
 }
+
+@layer utilities {
+  /* Tabular numerals — counters and percentages align in columns. */
+  .tabular {
+    font-feature-settings: 'tnum' 1, 'cv11' 1;
+  }
+  /* All-small-caps for milestone counters (M.01, M.02). */
+  .smcp {
+    font-variant: all-small-caps;
+    letter-spacing: 0.06em;
+  }
+  /* Drop cap utility for roadmap detail title.
+     Targets the first letter of an element; sized via the calling element's font-size. */
+  .dropcap::first-letter {
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-size: 4.5em;
+    line-height: 0.85;
+    float: left;
+    margin-right: 0.08em;
+    color: #b45309;
+    font-weight: 600;
+  }
+  /* Dotted underline used for inline link chips — scholarly, deliberate. */
+  .link-chip {
+    text-decoration: underline dotted;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+  }
+  /* Paper grain background — applied to the roadmaps list page wrapper.
+     Encoded SVG noise filter; very low opacity for texture without distraction. */
+  .paper-grain {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.035 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-repeat: repeat;
+  }
+}
