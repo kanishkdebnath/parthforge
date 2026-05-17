@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, MoreHorizontal } from 'lucide-react';
+import { GripVertical, MoreHorizontal, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Milestone } from '@pathforge/shared';
 import {
   DropdownMenu,
@@ -9,28 +9,31 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { InlineEditableTitle, InlineEditableText, InlineEditableDate } from '@/components/InlineEditable';
+import { InlineEditableTitle } from '@/components/InlineEditable';
+import { RingProgress } from './RingProgress';
+import { EditMilestoneDialog } from './EditMilestoneDialog';
 import { DeleteMilestoneConfirm } from './DeleteMilestoneConfirm';
 import { StepList } from './StepList';
 import { AddStepInline } from './AddStepInline';
 import { useUpdateMilestone, useDeleteMilestone } from '@/hooks/useRoadmaps';
 import { milestoneCompletionPct } from '@/lib/milestone-progress';
-import { isOverdue, pluralize } from '@/lib/formatters';
+import { isOverdue } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
 interface Props {
   roadmapId: string;
   milestone: Milestone;
-  index: number;
 }
 
-export function MilestoneCard({ roadmapId, milestone, index }: Props) {
+export function MilestoneCard({ roadmapId, milestone }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: milestone._id,
   });
   const updateMilestone = useUpdateMilestone(roadmapId, milestone._id);
   const deleteMilestone = useDeleteMilestone(roadmapId, milestone._id);
+  const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const pct = milestoneCompletionPct(milestone);
   const isDone = milestone.steps.length > 0 && milestone.steps.every((s) => s.completed);
@@ -46,101 +49,89 @@ export function MilestoneCard({ roadmapId, milestone, index }: Props) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        'rounded-md border bg-white px-5 py-5 transition-shadow',
-        isDragging ? 'shadow-lg scale-[1.01] border-active' : 'border-slate-200 shadow-none'
+        'bg-white rounded-xl p-5 shadow-sm transition-shadow',
+        isDragging && 'shadow-md ring-2 ring-brand-ring'
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <button
           {...attributes}
           {...listeners}
-          aria-label="Drag to reorder"
-          className="mt-1 cursor-grab text-slate-300 hover:text-slate-500 transition-colors"
+          aria-label="Drag to reorder milestone"
+          className="cursor-grab text-slate-300 hover:text-slate-500 transition-colors shrink-0"
         >
           <GripVertical className="h-4 w-4" />
         </button>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-3">
-            <span className="smcp text-xs text-slate-500 shrink-0 tabular">
-              M.{String(index + 1).padStart(2, '0')}
-            </span>
-            <h3 className="min-w-0 flex-1 font-display text-xl font-semibold tracking-tight text-slate-900">
-              <InlineEditableTitle
-                value={milestone.title}
-                onSave={(next) => {
-                  void updateMilestone.mutateAsync({ title: next });
-                }}
-              />
-            </h3>
-            <InlineEditableDate
-              value={milestone.deadline}
-              onSave={(d) => {
-                void updateMilestone.mutateAsync({ deadline: d });
-              }}
-              className="text-xs"
-            />
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">
-                <MoreHorizontal className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={() => setConfirmDelete(true)}
-                  className="text-overdue focus:text-overdue"
-                >
-                  Delete milestone
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="mt-2 text-sm text-slate-600">
-            <InlineEditableText
-              value={milestone.description ?? ''}
-              onSave={(next) => {
-                void updateMilestone.mutateAsync({ description: next });
-              }}
-              placeholder="add a description…"
-            />
-          </div>
-
-          {milestone.steps.length === 0 ? (
-            <p className="mt-4 text-xs text-slate-400 italic">Add steps to track progress.</p>
-          ) : (
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5 tabular">
-                <span>
-                  {milestone.steps.filter((s) => s.completed).length} of {milestone.steps.length}{' '}
-                  {pluralize(milestone.steps.length, 'step')}
-                </span>
-                <span className={cn(isDone && 'text-done font-medium', overdue && 'text-overdue')}>
-                  {pct}%
-                </span>
-              </div>
-              <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className={cn(
-                    'h-full transition-all duration-300',
-                    isDone ? 'bg-done' : overdue ? 'bg-overdue' : 'bg-active'
-                  )}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="mt-5 space-y-0">
-            <StepList
-              roadmapId={roadmapId}
-              milestoneId={milestone._id}
-              steps={milestone.steps}
-            />
-            <AddStepInline roadmapId={roadmapId} milestoneId={milestone._id} />
-          </div>
-        </div>
+        <RingProgress pct={pct} done={isDone} size="sm" />
+        <h3 className="flex-1 min-w-0 text-base font-semibold tracking-tight text-slate-900">
+          <InlineEditableTitle
+            value={milestone.title}
+            onSave={(next) => {
+              void updateMilestone.mutateAsync({ title: next });
+            }}
+          />
+        </h3>
+        <span className="text-xs text-slate-500 tabular-nums shrink-0">
+          {milestone.steps.filter((s) => s.completed).length} / {milestone.steps.length}
+        </span>
+        <button
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+          aria-label={collapsed ? 'Expand milestone' : 'Collapse milestone'}
+        >
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label="Milestone actions"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors shrink-0"
+          >
+            <MoreHorizontal className="h-3.5 w-3.5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+              Edit milestone
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setConfirmDelete(true)}
+              className="text-overdue focus:text-overdue"
+            >
+              Delete milestone
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
+      {milestone.description && !collapsed && (
+        <p className="mt-3 ml-11 text-sm text-slate-600 leading-relaxed">{milestone.description}</p>
+      )}
+
+      {!collapsed && (
+        <div className="mt-3">
+          {milestone.deadline && (
+            <p
+              className={cn(
+                'ml-11 mb-2 text-xs tabular-nums',
+                overdue ? 'text-overdue' : 'text-slate-500'
+              )}
+            >
+              {overdue
+                ? 'Overdue'
+                : `due ${new Date(milestone.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+            </p>
+          )}
+          <StepList roadmapId={roadmapId} milestoneId={milestone._id} steps={milestone.steps} />
+          <AddStepInline roadmapId={roadmapId} milestoneId={milestone._id} />
+        </div>
+      )}
+
+      <EditMilestoneDialog
+        roadmapId={roadmapId}
+        milestone={milestone}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
       <DeleteMilestoneConfirm
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
@@ -152,7 +143,7 @@ export function MilestoneCard({ roadmapId, milestone, index }: Props) {
             await deleteMilestone.mutateAsync();
             setConfirmDelete(false);
           } catch {
-            // Hook's onError surfaced a toast; keep dialog open for retry.
+            // Hook's onError already toasted.
           }
         }}
       />

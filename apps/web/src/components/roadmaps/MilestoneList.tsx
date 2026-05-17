@@ -7,7 +7,12 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import type { Roadmap } from '@pathforge/shared';
 import { MilestoneCard } from './MilestoneCard';
 import { useReorderMilestones } from '@/hooks/useRoadmaps';
@@ -35,9 +40,7 @@ export function MilestoneList({ roadmap }: Props) {
     reorder.mutate(next);
   };
 
-  if (roadmap.milestones.length === 0) {
-    return null;
-  }
+  if (roadmap.milestones.length === 0) return null;
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -45,14 +48,9 @@ export function MilestoneList({ roadmap }: Props) {
         items={roadmap.milestones.map((m) => m._id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-4">
-          {roadmap.milestones.map((m, idx) => (
-            <MilestoneCard
-              key={m._id}
-              roadmapId={roadmap._id}
-              milestone={m}
-              index={idx}
-            />
+        <div className="space-y-3">
+          {roadmap.milestones.map((m) => (
+            <MilestoneCard key={m._id} roadmapId={roadmap._id} milestone={m} />
           ))}
         </div>
       </SortableContext>

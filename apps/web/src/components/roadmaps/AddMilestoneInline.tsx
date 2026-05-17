@@ -1,66 +1,25 @@
-import { useEffect, useRef, useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { useAddMilestone } from '@/hooks/useRoadmaps';
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
+import { NewMilestoneDialog } from './NewMilestoneDialog';
 
 interface Props {
   roadmapId: string;
 }
 
 export function AddMilestoneInline({ roadmapId }: Props) {
-  const addMilestone = useAddMilestone(roadmapId);
-  const [active, setActive] = useState(false);
-  const [title, setTitle] = useState('');
-
-  // Guard against the unmount-blur double-fire when Enter triggers submit().
-  // Same pattern as InlineEditable (Task 4 fix). Reset on each new edit session.
-  const settledRef = useRef(false);
-  useEffect(() => {
-    if (active) settledRef.current = false;
-  }, [active]);
-
-  const submit = async () => {
-    if (settledRef.current) return;
-    const t = title.trim();
-    if (!t) {
-      settledRef.current = true;
-      setActive(false);
-      return;
-    }
-    settledRef.current = true;
-    setTitle('');
-    setActive(false);
-    await addMilestone.mutateAsync({ title: t });
-  };
-
-  if (!active) {
-    return (
-      <button
-        type="button"
-        onClick={() => setActive(true)}
-        className="mt-6 w-full rounded-md border border-dashed border-slate-300 px-4 py-4 text-left text-slate-500 hover:border-slate-400 hover:text-slate-700 transition-colors"
-      >
-        <span className="font-display italic">+ add a milestone…</span>
-      </button>
-    );
-  }
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="mt-6 rounded-md border border-active bg-white px-4 py-4">
-      <Input
-        autoFocus
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        onBlur={submit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') submit();
-          if (e.key === 'Escape') {
-            setTitle('');
-            setActive(false);
-          }
-        }}
-        placeholder="Milestone title — Enter to save"
-        className="border-0 px-0 focus-visible:ring-0 font-display text-lg"
-      />
-    </div>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-3 w-full bg-white border-2 border-dashed border-slate-200 rounded-xl py-4 text-sm text-slate-500 hover:border-slate-300 hover:text-slate-700 transition-colors flex items-center justify-center gap-2"
+      >
+        <Plus className="h-4 w-4" />
+        Add milestone
+      </button>
+      <NewMilestoneDialog roadmapId={roadmapId} open={open} onOpenChange={setOpen} />
+    </>
   );
 }
