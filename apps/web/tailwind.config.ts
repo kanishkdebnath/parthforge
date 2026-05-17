@@ -60,6 +60,7 @@ export default {
         overdue: {
           DEFAULT: '#be123c', // rose-700
           foreground: '#fff1f2', // rose-50
+          subtle: '#ffe4e6', // rose-100
         },
       },
       borderRadius: {

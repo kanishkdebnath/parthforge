@@ -40,7 +40,9 @@
     letter-spacing: 0.06em;
   }
   /* Drop cap utility for roadmap detail title.
-     Targets the first letter of an element; sized via the calling element's font-size. */
+     Targets the first letter of an element; sized via the calling element's font-size.
+     NOTE: `color` here mirrors `theme.colors.active.DEFAULT` in tailwind.config.ts.
+     Keep these in sync; CSS first-letter cannot reference Tailwind tokens directly. */
   .dropcap::first-letter {
     font-family: 'Fraunces', serif;
     font-optical-sizing: auto;
@@ -48,7 +50,7 @@
     line-height: 0.85;
     float: left;
     margin-right: 0.08em;
-    color: #b45309;
+    color: #b45309; /* sync with theme.colors.active.DEFAULT */
     font-weight: 600;
   }
   /* Dotted underline used for inline link chips — scholarly, deliberate. */
