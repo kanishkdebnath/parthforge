@@ -2,6 +2,8 @@ import { useParams } from 'react-router-dom';
 import { useRoadmap } from '@/hooks/useRoadmaps';
 import { NotFoundPanel } from '@/components/NotFoundPanel';
 import { RoadmapDetailHeader } from '@/components/roadmaps/RoadmapDetailHeader';
+import { MilestoneList } from '@/components/roadmaps/MilestoneList';
+import { AddMilestoneInline } from '@/components/roadmaps/AddMilestoneInline';
 
 export default function RoadmapDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -30,9 +32,11 @@ export default function RoadmapDetailPage() {
   return (
     <main className="container py-12 max-w-4xl">
       <RoadmapDetailHeader roadmap={data} />
-      <div className="mt-12 text-slate-400 text-sm italic">
-        (Milestone list arrives in Task 7.)
-      </div>
+      <section className="mt-12">
+        <h2 className="smcp text-xs text-slate-500 mb-4">Milestones</h2>
+        <MilestoneList roadmap={data} />
+        <AddMilestoneInline roadmapId={data._id} />
+      </section>
     </main>
   );
 }
