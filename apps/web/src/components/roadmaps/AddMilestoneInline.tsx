@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { useAddMilestone } from '@/hooks/useRoadmaps';
 
@@ -11,12 +11,22 @@ export function AddMilestoneInline({ roadmapId }: Props) {
   const [active, setActive] = useState(false);
   const [title, setTitle] = useState('');
 
+  // Guard against the unmount-blur double-fire when Enter triggers submit().
+  // Same pattern as InlineEditable (Task 4 fix). Reset on each new edit session.
+  const settledRef = useRef(false);
+  useEffect(() => {
+    if (active) settledRef.current = false;
+  }, [active]);
+
   const submit = async () => {
+    if (settledRef.current) return;
     const t = title.trim();
     if (!t) {
+      settledRef.current = true;
       setActive(false);
       return;
     }
+    settledRef.current = true;
     setTitle('');
     setActive(false);
     await addMilestone.mutateAsync({ title: t });
