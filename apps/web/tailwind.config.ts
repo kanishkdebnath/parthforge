@@ -7,12 +7,6 @@ export default {
   theme: {
     container: { center: true, padding: '2rem', screens: { '2xl': '1400px' } },
     extend: {
-      fontFamily: {
-        // Single font family — Inter via Tailwind's default sans stack.
-        // `font-display` remains as a class to ease the transition; existing
-        // usages keep working and render Inter (matches the new design).
-        display: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
-      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -65,13 +59,6 @@ export default {
           DEFAULT: '#dc2626', // red-600
           subtle: '#fee2e2',  // red-100
           foreground: '#fef2f2', // red-50
-        },
-        // KEPT (for now) — `active` is the old amber token. Old components
-        // still reference it. Removed in Task 7 once all references are gone.
-        active: {
-          DEFAULT: '#b45309', // amber-700
-          foreground: '#fffbeb',
-          subtle: '#fef3c7',
         },
       },
       borderRadius: {
