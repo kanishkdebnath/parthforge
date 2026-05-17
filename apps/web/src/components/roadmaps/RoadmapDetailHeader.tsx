@@ -127,17 +127,27 @@ export function RoadmapDetailHeader({ roadmap }: Props) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+            <Button
+              variant="ghost"
+              onClick={() => setConfirmDelete(false)}
+              disabled={deleteRoadmap.isPending}
+            >
               Cancel
             </Button>
             <Button
               onClick={async () => {
-                await deleteRoadmap.mutateAsync();
-                navigate(roadmap.archived ? '/roadmaps/archived' : '/roadmaps');
+                try {
+                  await deleteRoadmap.mutateAsync();
+                  navigate(roadmap.archived ? '/roadmaps/archived' : '/roadmaps');
+                } catch {
+                  // Hook's onError already surfaced a toast. Keep the dialog
+                  // open so the user can retry without re-opening.
+                }
               }}
+              disabled={deleteRoadmap.isPending}
               className="bg-overdue text-overdue-foreground hover:bg-overdue/90"
             >
-              Delete forever
+              {deleteRoadmap.isPending ? 'Deleting…' : 'Delete forever'}
             </Button>
           </DialogFooter>
         </DialogContent>

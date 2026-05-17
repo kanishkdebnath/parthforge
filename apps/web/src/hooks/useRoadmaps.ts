@@ -16,6 +16,12 @@ const LIST_KEY = (archived: boolean) => ['roadmaps', 'list', { archived }] as co
 const DETAIL_KEY = (id: string) => ['roadmaps', 'detail', id] as const;
 const LIST_PREFIX = ['roadmaps', 'list'] as const;
 
+function showMutationError(err: unknown, fallback: string) {
+  toast.error(fallback, {
+    description: err instanceof Error ? err.message : 'Try again.',
+  });
+}
+
 // ---------- Reads ----------
 
 export function useRoadmaps({ archived }: { archived: boolean }) {
@@ -53,6 +59,7 @@ export function useCreateRoadmap() {
       const res = await api.post<Roadmap>('/roadmaps', body);
       return res.data;
     },
+    onError: (err) => showMutationError(err, 'Could not create roadmap'),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
@@ -66,6 +73,7 @@ export function useUpdateRoadmap(id: string) {
       const res = await api.patch<Roadmap>(`/roadmaps/${id}`, body);
       return res.data;
     },
+    onError: (err) => showMutationError(err, 'Could not save roadmap'),
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(id), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
@@ -88,6 +96,7 @@ export function useDeleteRoadmap(id: string) {
     mutationFn: async (): Promise<void> => {
       await api.delete(`/roadmaps/${id}`);
     },
+    onError: (err) => showMutationError(err, 'Could not delete roadmap'),
     onSuccess: () => {
       qc.removeQueries({ queryKey: DETAIL_KEY(id) });
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
@@ -104,6 +113,7 @@ export function useAddMilestone(roadmapId: string) {
       const res = await api.post<Roadmap>(`/roadmaps/${roadmapId}/milestones`, body);
       return res.data;
     },
+    onError: (err) => showMutationError(err, 'Could not add milestone'),
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(roadmapId), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
@@ -121,6 +131,7 @@ export function useUpdateMilestone(roadmapId: string, milestoneId: string) {
       );
       return res.data;
     },
+    onError: (err) => showMutationError(err, 'Could not save milestone'),
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(roadmapId), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
@@ -137,6 +148,7 @@ export function useDeleteMilestone(roadmapId: string, milestoneId: string) {
       );
       return res.data;
     },
+    onError: (err) => showMutationError(err, 'Could not delete milestone'),
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(roadmapId), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
@@ -197,6 +209,7 @@ export function useAddStep(roadmapId: string, milestoneId: string) {
       );
       return res.data;
     },
+    onError: (err) => showMutationError(err, 'Could not add step'),
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(roadmapId), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
@@ -260,6 +273,7 @@ export function useDeleteStep(roadmapId: string, milestoneId: string, stepId: st
       );
       return res.data;
     },
+    onError: (err) => showMutationError(err, 'Could not delete step'),
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(roadmapId), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
