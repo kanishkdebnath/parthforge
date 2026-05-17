@@ -1,18 +1,29 @@
+import { Button } from '@/components/ui/button';
+
 interface Props {
   archived: boolean;
+  onNewClick?: () => void;
 }
 
-export function EmptyRoadmapsState({ archived }: Props) {
+export function EmptyRoadmapsState({ archived, onNewClick }: Props) {
   return (
-    <div className="mt-16 max-w-md text-slate-600">
-      <p className="font-display italic text-2xl text-slate-700">
-        {archived ? 'No archived roadmaps.' : 'An empty manuscript.'}
-      </p>
-      <p className="mt-4 text-sm">
+    <div className="mt-16 max-w-md">
+      <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+        {archived ? 'Nothing archived yet' : 'No roadmaps yet'}
+      </h2>
+      <p className="mt-2 text-sm text-slate-600">
         {archived
-          ? 'Roadmaps you archive will appear here. Nothing has been archived yet.'
-          : 'Press "+ New roadmap" to write the first chapter of a pursuit.'}
+          ? 'Roadmaps you archive will show up here. They stay accessible without cluttering your active list.'
+          : 'Start a roadmap to break a goal into milestones and steps. You can always edit or delete later.'}
       </p>
+      {!archived && onNewClick && (
+        <Button
+          onClick={onNewClick}
+          className="mt-6 bg-brand text-white hover:bg-brand-hover"
+        >
+          + New roadmap
+        </Button>
+      )}
     </div>
   );
 }
