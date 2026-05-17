@@ -157,13 +157,19 @@ export function useReorderMilestones(roadmapId: string) {
     onMutate: async (ids) => {
       await qc.cancelQueries({ queryKey: DETAIL_KEY(roadmapId) });
       const prev = qc.getQueryData<Roadmap>(DETAIL_KEY(roadmapId));
-      if (prev) {
+      // Only apply the optimistic reorder when the submitted set is a
+      // permutation of the existing set (same length + every id maps to a
+      // current milestone). Mismatched callers would otherwise produce a
+      // truncated list flash before the server response corrects it.
+      if (prev && ids.length === prev.milestones.length) {
         const byId = new Map(prev.milestones.map((m) => [m._id, m]));
-        const optimistic: Roadmap = {
-          ...prev,
-          milestones: ids.map((mid) => byId.get(mid)!).filter(Boolean),
-        };
-        qc.setQueryData(DETAIL_KEY(roadmapId), optimistic);
+        if (ids.every((mid) => byId.has(mid))) {
+          const optimistic: Roadmap = {
+            ...prev,
+            milestones: ids.map((mid) => byId.get(mid)!),
+          };
+          qc.setQueryData(DETAIL_KEY(roadmapId), optimistic);
+        }
       }
       return { prev };
     },
@@ -209,10 +215,12 @@ export function useUpdateStep(roadmapId: string, milestoneId: string) {
       return res.data;
     },
     onMutate: async ({ stepId, patch }) => {
-      // Optimistic only when `completed` flips — title/link edits use the
-      // standard invalidation pattern.
-      if (patch.completed === undefined) return {};
+      // Cancel any in-flight refetch unconditionally so a background fetch
+      // can't overwrite the success handler's `setQueryData`. The optimistic
+      // *write* only happens when `completed` flips — title/link edits still
+      // get cache-cancel safety but no optimistic mutation of the cache.
       await qc.cancelQueries({ queryKey: DETAIL_KEY(roadmapId) });
+      if (patch.completed === undefined) return {};
       const prev = qc.getQueryData<Roadmap>(DETAIL_KEY(roadmapId));
       if (!prev) return { prev };
       const optimistic: Roadmap = {
@@ -272,16 +280,24 @@ export function useReorderSteps(roadmapId: string, milestoneId: string) {
     onMutate: async (ids) => {
       await qc.cancelQueries({ queryKey: DETAIL_KEY(roadmapId) });
       const prev = qc.getQueryData<Roadmap>(DETAIL_KEY(roadmapId));
+      // Only apply when ids is a permutation of the target milestone's
+      // current step set — see useReorderMilestones onMutate for rationale.
       if (prev) {
-        const optimistic: Roadmap = {
-          ...prev,
-          milestones: prev.milestones.map((m) => {
-            if (m._id !== milestoneId) return m;
-            const byId = new Map(m.steps.map((s) => [s._id, s]));
-            return { ...m, steps: ids.map((sid) => byId.get(sid)!).filter(Boolean) };
-          }),
-        };
-        qc.setQueryData(DETAIL_KEY(roadmapId), optimistic);
+        const target = prev.milestones.find((m) => m._id === milestoneId);
+        if (target && ids.length === target.steps.length) {
+          const byId = new Map(target.steps.map((s) => [s._id, s]));
+          if (ids.every((sid) => byId.has(sid))) {
+            const optimistic: Roadmap = {
+              ...prev,
+              milestones: prev.milestones.map((m) =>
+                m._id !== milestoneId
+                  ? m
+                  : { ...m, steps: ids.map((sid) => byId.get(sid)!) }
+              ),
+            };
+            qc.setQueryData(DETAIL_KEY(roadmapId), optimistic);
+          }
+        }
       }
       return { prev };
     },
