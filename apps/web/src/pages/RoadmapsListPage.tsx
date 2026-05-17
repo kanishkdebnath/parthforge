@@ -6,6 +6,7 @@ import { RoadmapCardGrid } from '@/components/roadmaps/RoadmapCardGrid';
 import { EmptyRoadmapsState } from '@/components/roadmaps/EmptyRoadmapsState';
 import { NoResultsState } from '@/components/roadmaps/NoResultsState';
 import { NewRoadmapDialog } from '@/components/roadmaps/NewRoadmapDialog';
+import type { Roadmap } from '@pathforge/shared';
 
 interface Props {
   archived?: boolean;
@@ -17,10 +18,11 @@ export default function RoadmapsListPage({ archived = false }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const filtered = useMemo(() => {
-    if (!data) return [];
+    if (!data) return [] as Array<{ roadmap: Roadmap; absoluteIndex: number }>;
     const q = query.trim().toLowerCase();
-    if (q.length === 0) return data;
-    return data.filter((r) => {
+    const indexed = data.map((roadmap, idx) => ({ roadmap, absoluteIndex: idx }));
+    if (q.length === 0) return indexed;
+    return indexed.filter(({ roadmap: r }) => {
       if (r.title.toLowerCase().includes(q)) return true;
       if (r.description && r.description.toLowerCase().includes(q)) return true;
       if (r.milestones.some((m) => m.title.toLowerCase().includes(q))) return true;
@@ -57,7 +59,7 @@ export default function RoadmapsListPage({ archived = false }: Props) {
         {!isPending && data && data.length > 0 && filtered.length === 0 && (
           <NoResultsState query={query} />
         )}
-        {!isPending && filtered.length > 0 && <RoadmapCardGrid roadmaps={filtered} />}
+        {!isPending && filtered.length > 0 && <RoadmapCardGrid items={filtered} />}
       </div>
 
       <NewRoadmapDialog open={dialogOpen} onOpenChange={setDialogOpen} />

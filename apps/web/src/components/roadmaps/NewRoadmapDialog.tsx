@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -26,6 +26,14 @@ export function NewRoadmapDialog({ open, onOpenChange }: Props) {
   const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
 
+  useEffect(() => {
+    if (!open) {
+      setTitle('');
+      setDescription('');
+      setDeadline(undefined);
+    }
+  }, [open]);
+
   const submit = async () => {
     if (!title.trim()) return;
     const fresh = await create.mutateAsync({
@@ -34,9 +42,6 @@ export function NewRoadmapDialog({ open, onOpenChange }: Props) {
       deadline,
     });
     onOpenChange(false);
-    setTitle('');
-    setDescription('');
-    setDeadline(undefined);
     navigate(`/roadmaps/${fresh._id}`);
   };
 
