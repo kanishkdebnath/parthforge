@@ -36,7 +36,8 @@ export function AddStepInline({ roadmapId, milestoneId }: Props) {
           if (e.key === 'Enter') submit();
         }}
         placeholder="add a step — Enter to add"
-        className="border-0 px-0 focus-visible:ring-0 bg-transparent text-sm placeholder:italic placeholder:text-slate-400"
+        disabled={addStep.isPending}
+        className="border-0 px-0 focus-visible:ring-0 bg-transparent text-sm placeholder:italic placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
       />
     </div>
   );

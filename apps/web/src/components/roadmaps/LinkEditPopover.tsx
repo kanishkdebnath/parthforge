@@ -21,8 +21,8 @@ export function LinkEditPopover({ current, onChange, trigger }: Props) {
 
   const isValidUrl = (() => {
     try {
-      new URL(url);
-      return true;
+      const u = new URL(url.trim());
+      return u.protocol === 'http:' || u.protocol === 'https:';
     } catch {
       return false;
     }
@@ -30,7 +30,7 @@ export function LinkEditPopover({ current, onChange, trigger }: Props) {
 
   const add = () => {
     if (!isValidUrl) return;
-    onChange([...current, { url, label: label.trim() || undefined }]);
+    onChange([...current, { url: url.trim(), label: label.trim() || undefined }]);
     setUrl('');
     setLabel('');
   };
@@ -39,8 +39,16 @@ export function LinkEditPopover({ current, onChange, trigger }: Props) {
     onChange(current.filter((_, i) => i !== idx));
   };
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      setUrl('');
+      setLabel('');
+    }
+    setOpen(next);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className="w-80 space-y-3" align="start">
         {current.length > 0 && (
