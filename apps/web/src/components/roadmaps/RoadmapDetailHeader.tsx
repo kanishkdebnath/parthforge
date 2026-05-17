@@ -53,10 +53,13 @@ export function RoadmapDetailHeader({ roadmap }: Props) {
           <p className="smcp text-xs text-slate-500">
             {roadmap.archived ? 'Archived' : 'In pursuit'} {isDone && '· complete'}
           </p>
-          <h1 className="dropcap mt-2 font-display text-5xl font-semibold tracking-tight text-slate-900 leading-tight">
+          <h1 className="mt-2 font-display text-5xl font-semibold tracking-tight text-slate-900 leading-tight">
             <InlineEditableTitle
               value={roadmap.title}
-              onSave={(next) => void updateRoadmap.mutateAsync({ title: next })}
+              onSave={(next) => {
+                void updateRoadmap.mutateAsync({ title: next });
+              }}
+              className="dropcap"
             />
           </h1>
         </div>
