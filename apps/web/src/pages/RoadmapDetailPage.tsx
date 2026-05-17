@@ -4,6 +4,12 @@ import { NotFoundPanel } from '@/components/NotFoundPanel';
 
 export default function RoadmapDetailPage() {
   const { id } = useParams<{ id: string }>();
+  // Defensive: React Router guarantees id on /roadmaps/:id, but if this page
+  // is ever mounted programmatically without one, useRoadmap(undefined) would
+  // disable the query and hang on Loading… forever. Treat missing id as 404.
+  if (!id) {
+    return <NotFoundPanel title="Roadmap not found." detail="It may have been deleted or you do not have access." />;
+  }
   const { data, isPending } = useRoadmap(id);
 
   if (isPending) {
