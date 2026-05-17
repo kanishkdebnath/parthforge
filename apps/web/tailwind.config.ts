@@ -8,9 +8,10 @@ export default {
     container: { center: true, padding: '2rem', screens: { '2xl': '1400px' } },
     extend: {
       fontFamily: {
-        // Display = Fraunces (loaded in index.html via Google Fonts).
-        // Sans/Body = default Tailwind sans (Inter via Tailwind preflight or system stack).
-        display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
+        // Single font family — Inter via Tailwind's default sans stack.
+        // `font-display` remains as a class to ease the transition; existing
+        // usages keep working and render Inter (matches the new design).
+        display: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -46,21 +47,31 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // Editorial Manuscript semantic tokens. Use these for active/done/overdue states.
-        active: {
-          DEFAULT: '#b45309', // amber-700
-          foreground: '#fffbeb', // amber-50
-          subtle: '#fef3c7', // amber-100
+        // New Stripe/Apple palette — primary brand is sky, done is emerald,
+        // overdue is red. All three replace the amber/lime/rose set.
+        brand: {
+          DEFAULT: '#0ea5e9', // sky-500
+          hover: '#0284c7',   // sky-600
+          subtle: '#e0f2fe',  // sky-100
+          ring: '#bae6fd',    // sky-200
+          foreground: '#f0f9ff', // sky-50
         },
         done: {
-          DEFAULT: '#3f6212', // lime-800
-          foreground: '#f7fee7', // lime-50
-          subtle: '#ecfccb', // lime-100
+          DEFAULT: '#10b981', // emerald-500
+          subtle: '#d1fae5',  // emerald-100
+          foreground: '#ecfdf5', // emerald-50
         },
         overdue: {
-          DEFAULT: '#be123c', // rose-700
-          foreground: '#fff1f2', // rose-50
-          subtle: '#ffe4e6', // rose-100
+          DEFAULT: '#dc2626', // red-600
+          subtle: '#fee2e2',  // red-100
+          foreground: '#fef2f2', // red-50
+        },
+        // KEPT (for now) — `active` is the old amber token. Old components
+        // still reference it. Removed in Task 7 once all references are gone.
+        active: {
+          DEFAULT: '#b45309', // amber-700
+          foreground: '#fffbeb',
+          subtle: '#fef3c7',
         },
       },
       borderRadius: {

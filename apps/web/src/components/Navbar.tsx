@@ -30,8 +30,7 @@ export function Navbar() {
         <div className="flex items-center gap-8">
           <Link
             to="/"
-            className="font-display text-2xl font-semibold tracking-tight text-slate-900"
-            style={{ fontVariationSettings: '"opsz" 144' }}
+            className="text-xl font-semibold tracking-tight text-slate-900"
           >
             Pathforge
           </Link>
