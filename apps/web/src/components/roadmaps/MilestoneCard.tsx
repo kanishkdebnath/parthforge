@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { InlineEditableTitle, InlineEditableText, InlineEditableDate } from '@/components/InlineEditable';
 import { DeleteMilestoneConfirm } from './DeleteMilestoneConfirm';
+import { StepList } from './StepList';
+import { AddStepInline } from './AddStepInline';
 import { useUpdateMilestone, useDeleteMilestone } from '@/hooks/useRoadmaps';
 import { milestoneCompletionPct } from '@/lib/milestone-progress';
 import { isOverdue, pluralize } from '@/lib/formatters';
@@ -128,8 +130,13 @@ export function MilestoneCard({ roadmapId, milestone, index }: Props) {
             </div>
           )}
 
-          <div className="mt-5">
-            <p className="text-xs text-slate-400 italic">(Step list arrives in Task 8.)</p>
+          <div className="mt-5 space-y-0">
+            <StepList
+              roadmapId={roadmapId}
+              milestoneId={milestone._id}
+              steps={milestone.steps}
+            />
+            <AddStepInline roadmapId={roadmapId} milestoneId={milestone._id} />
           </div>
         </div>
       </div>
