@@ -81,7 +81,7 @@ export function RoadmapSidebar({ roadmap }: Props) {
             onClick={() => setDeleteOpen(true)}
             className={cn(
               'w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-colors',
-              'text-red-700 hover:bg-red-50'
+              'text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40'
             )}
           >
             <Trash2 className="h-3.5 w-3.5" />

@@ -19,7 +19,7 @@ export default function RoadmapDetailPage() {
 
   if (isPending) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-50">
+      <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950">
         <div className="container max-w-6xl py-10 px-6 text-sm text-slate-500 dark:text-slate-400">Loading…</div>
       </main>
     );
@@ -34,7 +34,7 @@ export default function RoadmapDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-50">
+    <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950">
       <div className="container max-w-6xl py-10 px-6">
         <div className="flex flex-col lg:flex-row gap-10">
           <RoadmapSidebar roadmap={data} />
