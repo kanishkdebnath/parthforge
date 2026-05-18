@@ -42,12 +42,11 @@ function validate(raw: string): Validation {
     };
   }
   const stepCount = result.data.milestones.reduce(
-    (n, m) => n + (m.steps?.length ?? 0),
+    (n, m) => n + m.steps.length,
     0
   );
   const linkCount = result.data.milestones.reduce(
-    (n, m) =>
-      n + (m.steps ?? []).reduce((k, s) => k + (s.links?.length ?? 0), 0),
+    (n, m) => n + m.steps.reduce((k, s) => k + s.links.length, 0),
     0
   );
   return {
@@ -168,8 +167,8 @@ export function ImportPastePanel({ pending, serverErrors, onCancel, onSubmit }: 
         <div role="alert" className="text-xs text-overdue">
           <p className="font-medium">Server rejected the payload:</p>
           <ul className="mt-1 list-disc list-inside space-y-0.5">
-            {serverErrors.map((e) => (
-              <li key={`${e.path}-${e.message}`}>
+            {serverErrors.map((e, i) => (
+              <li key={`${i}-${e.path}`}>
                 {e.path || '(root)'}: {e.message}
               </li>
             ))}
