@@ -72,9 +72,9 @@ export async function roadmapsRoutes(app: FastifyInstance): Promise<void> {
         title: m.title,
         description: m.description,
         deadline: m.deadline,
-        steps: (m.steps ?? []).map((s) => ({
+        steps: m.steps.map((s) => ({
           title: s.title,
-          links: s.links ?? [],
+          links: s.links,
           completed: false,
         })),
       })),
