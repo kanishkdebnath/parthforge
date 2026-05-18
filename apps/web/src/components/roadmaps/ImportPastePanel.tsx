@@ -142,7 +142,11 @@ export function ImportPastePanel({ pending, serverErrors, onCancel, onSubmit }: 
         </Button>
       </div>
 
-      <div role="alert" aria-live="polite" className="min-h-[1.25rem]">
+      <div
+        role={showState.kind === 'invalid' ? 'alert' : undefined}
+        aria-live="polite"
+        className="min-h-[1.25rem]"
+      >
         {showState.kind === 'empty' && (
           <p className="text-xs text-slate-500">Paste JSON or upload a file.</p>
         )}

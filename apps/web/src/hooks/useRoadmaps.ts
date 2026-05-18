@@ -346,7 +346,8 @@ export function useBulkCreateRoadmap() {
       const res = await api.post<Roadmap>('/roadmaps/bulk', body);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (fresh) => {
+      qc.setQueryData(DETAIL_KEY(fresh._id), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
   });
