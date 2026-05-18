@@ -1,11 +1,13 @@
 import { Button } from '@/components/ui/button';
+import { ImportRoadmapButton } from './ImportRoadmapButton';
 
 interface Props {
   archived: boolean;
   onNewClick: () => void;
+  onImportClick: () => void;
 }
 
-export function ListPageHeader({ archived, onNewClick }: Props) {
+export function ListPageHeader({ archived, onNewClick, onImportClick }: Props) {
   return (
     <div className="flex items-end justify-between gap-6">
       <div>
@@ -17,12 +19,15 @@ export function ListPageHeader({ archived, onNewClick }: Props) {
         </p>
       </div>
       {!archived && (
-        <Button
-          onClick={onNewClick}
-          className="bg-brand text-white hover:bg-brand-hover"
-        >
-          + New roadmap
-        </Button>
+        <div className="flex items-center gap-2">
+          <ImportRoadmapButton onClick={onImportClick} />
+          <Button
+            onClick={onNewClick}
+            className="bg-brand text-white hover:bg-brand-hover"
+          >
+            + New roadmap
+          </Button>
+        </div>
       )}
     </div>
   );

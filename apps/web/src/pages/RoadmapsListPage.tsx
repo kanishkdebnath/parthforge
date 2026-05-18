@@ -7,6 +7,7 @@ import { RoadmapCardGrid } from '@/components/roadmaps/RoadmapCardGrid';
 import { EmptyRoadmapsState } from '@/components/roadmaps/EmptyRoadmapsState';
 import { NoResultsState } from '@/components/roadmaps/NoResultsState';
 import { NewRoadmapDialog } from '@/components/roadmaps/NewRoadmapDialog';
+import { ImportRoadmapDialog } from '@/components/roadmaps/ImportRoadmapDialog';
 
 interface Props {
   archived?: boolean;
@@ -15,7 +16,8 @@ interface Props {
 export default function RoadmapsListPage({ archived = false }: Props) {
   const { data, isPending } = useRoadmaps({ archived });
   const [query, setQuery] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newDialogOpen, setNewDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const filtered = useMemo<Roadmap[]>(() => {
     if (!data) return [];
@@ -32,12 +34,16 @@ export default function RoadmapsListPage({ archived = false }: Props) {
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="container max-w-6xl py-10 px-6">
-        <ListPageHeader archived={archived} onNewClick={() => setDialogOpen(true)} />
+        <ListPageHeader
+          archived={archived}
+          onNewClick={() => setNewDialogOpen(true)}
+          onImportClick={() => setImportDialogOpen(true)}
+        />
         <RoadmapsToolbar query={query} onQueryChange={setQuery} archived={archived} />
 
         {isPending && <p className="mt-12 text-sm text-slate-500">Loading…</p>}
         {!isPending && data && data.length === 0 && (
-          <EmptyRoadmapsState archived={archived} onNewClick={() => setDialogOpen(true)} />
+          <EmptyRoadmapsState archived={archived} onNewClick={() => setNewDialogOpen(true)} />
         )}
         {!isPending && data && data.length > 0 && filtered.length === 0 && (
           <NoResultsState query={query} />
@@ -45,7 +51,8 @@ export default function RoadmapsListPage({ archived = false }: Props) {
         {!isPending && filtered.length > 0 && <RoadmapCardGrid roadmaps={filtered} />}
       </div>
 
-      <NewRoadmapDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <NewRoadmapDialog open={newDialogOpen} onOpenChange={setNewDialogOpen} />
+      <ImportRoadmapDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} />
     </main>
   );
 }
