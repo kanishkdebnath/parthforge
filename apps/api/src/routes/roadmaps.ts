@@ -8,6 +8,7 @@ import {
   CreateStepRequestSchema,
   UpdateStepRequestSchema,
   ReorderRequestSchema,
+  BulkRoadmapRequestSchema,
 } from '@pathforge/shared';
 import { RoadmapModel } from '../models/Roadmap.js';
 import {
@@ -45,6 +46,38 @@ export async function roadmapsRoutes(app: FastifyInstance): Promise<void> {
       deadline: parsed.data.deadline,
       archived: false,
       milestones: [],
+    });
+    return reply.code(201).send(serializeRoadmap(doc.toObject() as never));
+  });
+
+  // POST /api/roadmaps/bulk
+  app.post('/api/roadmaps/bulk', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const parsed = BulkRoadmapRequestSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        errors: parsed.error.issues.map((i) => ({
+          path: i.path.join('.'),
+          message: i.message,
+        })),
+      });
+    }
+    const userId = request.user!._id;
+    const doc = await RoadmapModel.create({
+      userId,
+      title: parsed.data.roadmap.title,
+      description: parsed.data.roadmap.description,
+      deadline: parsed.data.roadmap.deadline,
+      archived: false,
+      milestones: parsed.data.milestones.map((m) => ({
+        title: m.title,
+        description: m.description,
+        deadline: m.deadline,
+        steps: (m.steps ?? []).map((s) => ({
+          title: s.title,
+          links: s.links ?? [],
+          completed: false,
+        })),
+      })),
     });
     return reply.code(201).send(serializeRoadmap(doc.toObject() as never));
   });
