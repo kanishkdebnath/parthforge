@@ -7,6 +7,7 @@ import type {
   UpdateMilestoneRequest,
   CreateStepRequest,
   UpdateStepRequest,
+  BulkRoadmapRequest,
 } from '@pathforge/shared';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -323,6 +324,30 @@ export function useReorderSteps(roadmapId: string, milestoneId: string) {
     },
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(roadmapId), fresh);
+    },
+  });
+}
+
+// ---------- Bulk import ----------
+
+/**
+ * Posts a full roadmap-tree payload to /roadmaps/bulk. On success invalidates
+ * the list cache (so the new roadmap appears in the listing the user returns
+ * to) and resolves with the created `Roadmap` so the caller can navigate.
+ *
+ * Errors are NOT auto-toasted here because the dialog renders structured 400
+ * errors inline. The caller's `mutateAsync` rejection handler decides whether
+ * to surface a toast (network/500) or render inline errors (400 from Zod).
+ */
+export function useBulkCreateRoadmap() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: BulkRoadmapRequest): Promise<Roadmap> => {
+      const res = await api.post<Roadmap>('/roadmaps/bulk', body);
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
   });
 }
