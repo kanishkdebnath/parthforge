@@ -25,7 +25,7 @@ export function Navbar() {
     .toUpperCase();
 
   return (
-    <header className="border-b border-slate-200 bg-background">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-background/85 backdrop-blur">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
           <Link
