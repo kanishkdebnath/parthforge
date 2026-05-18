@@ -11,10 +11,10 @@ export function ListPageHeader({ archived, onNewClick, onImportClick }: Props) {
   return (
     <div className="flex items-end justify-between gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
           {archived ? 'Archive' : 'Roadmaps'}
         </h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           {archived ? 'Roadmaps you have set aside.' : 'Pursuits in motion.'}
         </p>
       </div>

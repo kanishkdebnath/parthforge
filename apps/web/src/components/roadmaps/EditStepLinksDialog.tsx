@@ -77,22 +77,22 @@ export function EditStepLinksDialog({
         </DialogHeader>
         <div className="space-y-4 mt-2">
           {links.length > 0 && (
-            <ul className="space-y-1.5 border border-slate-200 rounded-md p-2 bg-slate-50">
+            <ul className="space-y-1.5 border border-slate-200 dark:border-slate-800 rounded-md p-2 bg-slate-50 dark:bg-slate-950">
               {links.map((l, idx) => (
                 <li
                   key={idx}
-                  className="flex items-center gap-2 px-2 py-1 bg-white rounded-md border border-slate-100"
+                  className="flex items-center gap-2 px-2 py-1 bg-white dark:bg-slate-900 rounded-md border border-slate-100 dark:border-slate-800"
                 >
-                  <span className="flex-1 min-w-0 text-sm text-slate-700 truncate">
+                  <span className="flex-1 min-w-0 text-sm text-slate-700 dark:text-slate-300 truncate">
                     {l.label ? <strong className="font-medium">{l.label}</strong> : null}
-                    {l.label ? <span className="text-slate-400"> · </span> : null}
-                    <span className="text-slate-500 text-xs">{l.url}</span>
+                    {l.label ? <span className="text-slate-400 dark:text-slate-500"> · </span> : null}
+                    <span className="text-slate-500 dark:text-slate-400 text-xs">{l.url}</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => removeLink(idx)}
                     aria-label="Remove link"
-                    className="text-slate-400 hover:text-overdue transition-colors"
+                    className="text-slate-400 dark:text-slate-500 hover:text-overdue transition-colors"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -100,7 +100,7 @@ export function EditStepLinksDialog({
               ))}
             </ul>
           )}
-          <div className="space-y-2 pt-2 border-t border-slate-100">
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
             <Input
               type="url"
               value={url}

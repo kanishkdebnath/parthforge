@@ -105,8 +105,8 @@ export function ImportPastePanel({ pending, serverErrors, onCancel, onSubmit }: 
   return (
     <section className="space-y-3">
       <div>
-        <h3 className="text-sm font-semibold text-slate-900">2. Paste the result</h3>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">2. Paste the result</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
           Paste the LLM's JSON response or upload it as a file.
         </p>
       </div>
@@ -148,7 +148,7 @@ export function ImportPastePanel({ pending, serverErrors, onCancel, onSubmit }: 
         className="min-h-[1.25rem]"
       >
         {showState.kind === 'empty' && (
-          <p className="text-xs text-slate-500">Paste JSON or upload a file.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Paste JSON or upload a file.</p>
         )}
         {showState.kind === 'invalid' && (
           <div className="text-xs text-overdue">

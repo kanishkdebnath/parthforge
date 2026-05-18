@@ -8,10 +8,10 @@ interface Props {
 export function EmptyRoadmapsState({ archived, onNewClick }: Props) {
   return (
     <div className="mt-16 max-w-md">
-      <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+      <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
         {archived ? 'Nothing archived yet' : 'No roadmaps yet'}
       </h2>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
         {archived
           ? 'Roadmaps you archive will show up here. They stay accessible without cluttering your active list.'
           : 'Start a roadmap to break a goal into milestones and steps. You can always edit or delete later.'}

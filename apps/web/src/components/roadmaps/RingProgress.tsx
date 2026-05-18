@@ -35,14 +35,14 @@ export function RingProgress({ pct, done = false, size = 'sm', className }: Prop
       aria-label={done ? 'Complete' : `${clamped}% complete`}
     >
       <div
-        className="absolute bg-white rounded-full"
+        className="absolute bg-white dark:bg-slate-900 rounded-full"
         style={{ inset }}
       />
       <div
         className={cn(
           'absolute inset-0 flex items-center justify-center font-semibold tabular-nums',
           SIZE_TO_TEXT[size],
-          done ? 'text-done' : 'text-slate-900'
+          done ? 'text-done' : 'text-slate-900 dark:text-slate-100'
         )}
       >
         {done ? '✓' : `${clamped}%`}

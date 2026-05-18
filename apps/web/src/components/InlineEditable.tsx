@@ -81,8 +81,8 @@ export function InlineEditableTitle({
       type="button"
       onClick={() => setEditing(true)}
       className={cn(
-        'block text-left w-full hover:bg-slate-50/60 -mx-1 px-1 rounded-sm transition-colors',
-        !value && 'text-slate-400 italic',
+        'block text-left w-full hover:bg-slate-50 dark:hover:bg-slate-800/60 -mx-1 px-1 rounded-sm transition-colors',
+        !value && 'text-slate-400 dark:text-slate-500 italic',
         className
       )}
     >

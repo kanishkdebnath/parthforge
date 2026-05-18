@@ -32,7 +32,7 @@ export default function RoadmapsListPage({ archived = false }: Props) {
   }, [data, query]);
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="container max-w-6xl py-10 px-6">
         <ListPageHeader
           archived={archived}
@@ -41,7 +41,7 @@ export default function RoadmapsListPage({ archived = false }: Props) {
         />
         <RoadmapsToolbar query={query} onQueryChange={setQuery} archived={archived} />
 
-        {isPending && <p className="mt-12 text-sm text-slate-500">Loading…</p>}
+        {isPending && <p className="mt-12 text-sm text-slate-500 dark:text-slate-400">Loading…</p>}
         {!isPending && data && data.length === 0 && (
           <EmptyRoadmapsState archived={archived} onNewClick={() => setNewDialogOpen(true)} />
         )}

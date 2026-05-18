@@ -42,8 +42,8 @@ export function StepRow({ roadmapId, milestoneId, step }: Props) {
         style={style}
         className={cn(
           'group flex items-start gap-2.5 py-1.5 pl-1 pr-2 rounded-md',
-          isDragging && 'bg-white shadow-sm ring-1 ring-brand-ring',
-          !isDragging && 'hover:bg-slate-50'
+          isDragging && 'bg-white dark:bg-slate-900 shadow-sm ring-1 ring-brand-ring',
+          !isDragging && 'hover:bg-slate-50 dark:hover:bg-slate-800'
         )}
       >
         <button
@@ -68,7 +68,7 @@ export function StepRow({ roadmapId, milestoneId, step }: Props) {
           <div
             className={cn(
               'text-sm transition-colors duration-150',
-              step.completed ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-900'
+              step.completed ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-300' : 'text-slate-900 dark:text-slate-100'
             )}
           >
             <InlineEditableTitle
@@ -86,7 +86,7 @@ export function StepRow({ roadmapId, milestoneId, step }: Props) {
           onClick={() => setLinksOpen(true)}
           aria-label="Edit links"
           className={cn(
-            'mt-1 text-slate-300 hover:text-brand transition-opacity shrink-0',
+            'mt-1 text-slate-300 dark:text-slate-600 hover:text-brand transition-opacity shrink-0',
             step.links.length > 0 ? 'opacity-60' : 'opacity-0 group-hover:opacity-100'
           )}
         >
@@ -96,7 +96,7 @@ export function StepRow({ roadmapId, milestoneId, step }: Props) {
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Step actions"
-            className="mt-0.5 flex h-6 w-6 items-center justify-center rounded text-slate-300 opacity-0 group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-700 transition-opacity shrink-0"
+            className="mt-0.5 flex h-6 w-6 items-center justify-center rounded text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300 transition-opacity shrink-0"
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
           </DropdownMenuTrigger>

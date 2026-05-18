@@ -55,7 +55,7 @@ export function NewMilestoneDialog({ roadmapId, open, onOpenChange }: Props) {
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1.5">Title</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Title</label>
             <Input
               autoFocus
               value={title}
@@ -67,8 +67,8 @@ export function NewMilestoneDialog({ roadmapId, open, onOpenChange }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1.5">
-              Description <span className="text-slate-400 font-normal">(optional)</span>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              Description <span className="text-slate-400 dark:text-slate-500 font-normal">(optional)</span>
             </label>
             <Textarea
               value={description}
@@ -78,16 +78,16 @@ export function NewMilestoneDialog({ roadmapId, open, onOpenChange }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1.5">
-              Deadline <span className="text-slate-400 font-normal">(optional)</span>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              Deadline <span className="text-slate-400 dark:text-slate-500 font-normal">(optional)</span>
             </label>
             <Popover open={deadlineOpen} onOpenChange={setDeadlineOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="w-full text-left px-3 py-2 text-sm bg-white border border-slate-200 rounded-md hover:border-slate-300 transition-colors"
+                  className="w-full text-left px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
                 >
-                  {deadline ? formatDeadline(deadline) : <span className="text-slate-400">Pick a date</span>}
+                  {deadline ? formatDeadline(deadline) : <span className="text-slate-400 dark:text-slate-500">Pick a date</span>}
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -108,7 +108,7 @@ export function NewMilestoneDialog({ roadmapId, open, onOpenChange }: Props) {
                         setDeadline(undefined);
                         setDeadlineOpen(false);
                       }}
-                      className="text-xs text-slate-600 hover:text-overdue px-2 py-1"
+                      className="text-xs text-slate-600 dark:text-slate-400 hover:text-overdue px-2 py-1"
                     >
                       Clear
                     </button>

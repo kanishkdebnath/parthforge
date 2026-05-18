@@ -49,8 +49,8 @@ export function ImportPromptPanel() {
   return (
     <section className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-slate-900">1. Generate the prompt</h3>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">1. Generate the prompt</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
           Describe your goal, then copy the prompt and paste it into any LLM.
         </p>
       </div>
@@ -58,7 +58,7 @@ export function ImportPromptPanel() {
       <div>
         <label
           htmlFor="import-goal"
-          className="block text-xs font-medium text-slate-700 mb-1.5"
+          className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
         >
           What's the goal?
         </label>
@@ -74,9 +74,9 @@ export function ImportPromptPanel() {
       <div>
         <label
           htmlFor="import-prompt"
-          className="block text-xs font-medium text-slate-700 mb-1.5"
+          className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
         >
-          Prompt to send <span className="text-slate-400 font-normal">(updates as you type)</span>
+          Prompt to send <span className="text-slate-400 dark:text-slate-500 font-normal">(updates as you type)</span>
         </label>
         <Textarea
           id="import-prompt"

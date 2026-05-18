@@ -49,7 +49,7 @@ export function MilestoneCard({ roadmapId, milestone }: Props) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        'bg-white rounded-xl p-5 shadow-sm transition-shadow',
+        'bg-white dark:bg-slate-900 rounded-xl p-5 shadow-sm transition-shadow',
         isDragging && 'shadow-md ring-2 ring-brand-ring'
       )}
     >
@@ -58,12 +58,12 @@ export function MilestoneCard({ roadmapId, milestone }: Props) {
           {...attributes}
           {...listeners}
           aria-label="Drag to reorder milestone"
-          className="cursor-grab text-slate-300 hover:text-slate-500 transition-colors shrink-0"
+          className="cursor-grab text-slate-300 dark:text-slate-600 hover:text-slate-500 transition-colors shrink-0"
         >
           <GripVertical className="h-4 w-4" />
         </button>
         <RingProgress pct={pct} done={isDone} size="sm" />
-        <h3 className="flex-1 min-w-0 text-base font-semibold tracking-tight text-slate-900">
+        <h3 className="flex-1 min-w-0 text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           <InlineEditableTitle
             value={milestone.title}
             onSave={(next) => {
@@ -71,13 +71,13 @@ export function MilestoneCard({ roadmapId, milestone }: Props) {
             }}
           />
         </h3>
-        <span className="text-xs text-slate-500 tabular-nums shrink-0">
+        <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums shrink-0">
           {milestone.steps.filter((s) => s.completed).length} / {milestone.steps.length}
         </span>
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
-          className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+          className="text-slate-400 dark:text-slate-500 hover:text-slate-600 transition-colors shrink-0"
           aria-label={collapsed ? 'Expand milestone' : 'Collapse milestone'}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -85,7 +85,7 @@ export function MilestoneCard({ roadmapId, milestone }: Props) {
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Milestone actions"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors shrink-0"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300 transition-colors shrink-0"
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
           </DropdownMenuTrigger>
@@ -104,7 +104,7 @@ export function MilestoneCard({ roadmapId, milestone }: Props) {
       </div>
 
       {milestone.description && !collapsed && (
-        <p className="mt-3 ml-11 text-sm text-slate-600 leading-relaxed">{milestone.description}</p>
+        <p className="mt-3 ml-11 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{milestone.description}</p>
       )}
 
       {!collapsed && (
@@ -113,7 +113,7 @@ export function MilestoneCard({ roadmapId, milestone }: Props) {
             <p
               className={cn(
                 'ml-11 mb-2 text-xs tabular-nums',
-                overdue ? 'text-overdue' : 'text-slate-500'
+                overdue ? 'text-overdue' : 'text-slate-500 dark:text-slate-400'
               )}
             >
               {overdue

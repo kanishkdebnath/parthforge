@@ -52,7 +52,7 @@ export function RoadmapCard({ roadmap }: Props) {
   return (
     <Link
       to={`/roadmaps/${roadmap._id}`}
-      className="group block bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
+      className="group block bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
     >
       <div className="flex items-start gap-4">
         <div
@@ -64,22 +64,22 @@ export function RoadmapCard({ roadmap }: Props) {
           <Icon className="h-5 w-5 text-white" strokeWidth={2.25} />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-semibold tracking-tight text-slate-900 truncate group-hover:text-slate-950">
+          <h3 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100 truncate group-hover:text-slate-950 dark:group-hover:text-slate-50">
             {roadmap.title}
           </h3>
           {roadmap.description && (
-            <p className="mt-1 text-sm text-slate-600 line-clamp-2">{roadmap.description}</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">{roadmap.description}</p>
           )}
         </div>
       </div>
       <div className="mt-5 flex items-center justify-between">
         <RingProgress pct={pct} done={isDone} size="sm" />
-        <div className="flex items-center gap-3 text-xs text-slate-500 tabular-nums">
+        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
           <span>
             {milestoneCount} {pluralize(milestoneCount, 'milestone')}
           </span>
           {roadmap.deadline && (
-            <span className={overdue ? 'text-overdue' : 'text-slate-500'}>
+            <span className={overdue ? 'text-overdue' : 'text-slate-500 dark:text-slate-400'}>
               {overdue ? 'overdue · ' : 'due '}
               {formatDeadline(roadmap.deadline)}
             </span>

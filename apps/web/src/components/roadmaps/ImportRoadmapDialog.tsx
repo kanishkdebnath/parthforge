@@ -60,7 +60,7 @@ export function ImportRoadmapDialog({ open, onOpenChange }: Props) {
         </DialogHeader>
         <div className="space-y-6 mt-4" key={open ? 'open' : 'closed'}>
           <ImportPromptPanel />
-          <div className="border-t border-slate-200" />
+          <div className="border-t border-slate-200 dark:border-slate-800" />
           <ImportPastePanel
             pending={bulkCreate.isPending}
             serverErrors={serverErrors}
