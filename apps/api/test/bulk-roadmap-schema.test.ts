@@ -1,19 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { BulkRoadmapRequestSchema } from '@pathforge/shared';
 
-const validPayload = {
-  roadmap: { title: 'Learn Rust' },
-  milestones: [
-    {
-      title: 'Foundation',
-      steps: [
-        { title: 'Read chapter 1' },
-        { title: 'Run cargo test', links: [{ url: 'https://doc.rust-lang.org/book/' }] },
-      ],
-    },
-  ],
-};
-
 describe('BulkRoadmapRequestSchema', () => {
   it('accepts a minimal valid payload (titles only)', () => {
     const result = BulkRoadmapRequestSchema.safeParse({
@@ -84,6 +71,23 @@ describe('BulkRoadmapRequestSchema', () => {
     }
   });
 
+  it('rejects data: URLs in step links', () => {
+    const result = BulkRoadmapRequestSchema.safeParse({
+      roadmap: { title: 'T' },
+      milestones: [
+        {
+          title: 'M',
+          steps: [{ title: 'S', links: [{ url: 'data:text/html,<script>alert(1)</script>' }] }],
+        },
+      ],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path.join('.'));
+      expect(paths.some((p) => p.includes('milestones.0.steps.0.links.0.url'))).toBe(true);
+    }
+  });
+
   it('rejects step title longer than 200 chars', () => {
     const longTitle = 'x'.repeat(201);
     const result = BulkRoadmapRequestSchema.safeParse({
@@ -91,6 +95,10 @@ describe('BulkRoadmapRequestSchema', () => {
       milestones: [{ title: 'M', steps: [{ title: longTitle }] }],
     });
     expect(result.success).toBe(false);
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path.join('.'));
+      expect(paths).toContain('milestones.0.steps.0.title');
+    }
   });
 
   it('accepts payload with deadline supplied as ISO YYYY-MM-DD string and coerces to Date', () => {

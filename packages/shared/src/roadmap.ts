@@ -132,10 +132,9 @@ export const BulkRoadmapRequestSchema = z.object({
           .array(
             z.object({
               title: z.string().min(1).max(200),
-              links: z.array(BulkLinkSchema).optional().default([]),
+              links: z.array(BulkLinkSchema).default([]),
             })
           )
-          .optional()
           .default([]),
       })
     )
