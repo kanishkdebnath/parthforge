@@ -1,11 +1,6 @@
 import { z } from 'zod';
 import { LinkSchema } from './link.js';
-
-// 24-char lowercase hex — Mongo ObjectId. Reused for all id-shaped fields
-// across the roadmap surface so malformed values are rejected at the boundary
-// instead of triggering a Mongoose CastError → 500 (same rule as
-// LoginRequestSchema.userId).
-const ObjectIdString = z.string().regex(/^[a-f\d]{24}$/i);
+import { ObjectIdString } from './objectId.js';
 
 export const StepSchema = z.object({
   _id: ObjectIdString,
