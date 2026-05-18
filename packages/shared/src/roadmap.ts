@@ -90,3 +90,56 @@ export const ReorderRequestSchema = z.object({
   ids: z.array(ObjectIdString).min(1),
 });
 export type ReorderRequest = z.infer<typeof ReorderRequestSchema>;
+
+// Bulk import — accepts a full roadmap tree in a single request.
+// Used by POST /api/roadmaps/bulk and the "Import from LLM" frontend flow.
+// Field caps mirror single-item schemas where they exist; we add explicit
+// max(200) on titles + max(2000) on descriptions so an LLM can't blow past
+// reasonable bounds. The link URL is narrowed to http/https as defense in
+// depth against javascript:/data: URLs in untrusted LLM output (the wider
+// LinkSchema is intentionally permissive for backwards compat).
+const BulkLinkSchema = z.object({
+  url: z
+    .string()
+    .url()
+    .refine(
+      (v) => {
+        try {
+          const u = new URL(v);
+          return u.protocol === 'http:' || u.protocol === 'https:';
+        } catch {
+          return false;
+        }
+      },
+      { message: 'URL must use http or https' }
+    ),
+  label: z.string().max(200).optional(),
+});
+
+export const BulkRoadmapRequestSchema = z.object({
+  roadmap: z.object({
+    title: z.string().min(1).max(200),
+    description: z.string().max(2000).optional(),
+    deadline: z.coerce.date().optional(),
+  }),
+  milestones: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(200),
+        description: z.string().max(2000).optional(),
+        deadline: z.coerce.date().optional(),
+        steps: z
+          .array(
+            z.object({
+              title: z.string().min(1).max(200),
+              links: z.array(BulkLinkSchema).optional().default([]),
+            })
+          )
+          .optional()
+          .default([]),
+      })
+    )
+    .min(1),
+});
+
+export type BulkRoadmapRequest = z.infer<typeof BulkRoadmapRequestSchema>;
