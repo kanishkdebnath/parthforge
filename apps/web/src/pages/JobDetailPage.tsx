@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useJob } from '@/hooks/useJobs';
 import { JobDetailSidebar } from '@/components/jobs/JobDetailSidebar';
 import { JobNotesPanel } from '@/components/jobs/JobNotesPanel';
+import { RoundsPanel } from '@/components/jobs/RoundsPanel';
 import { NotFoundPanel } from '@/components/NotFoundPanel';
 
 export default function JobDetailPage() {
@@ -39,14 +40,7 @@ export default function JobDetailPage() {
           <section className="flex-1 min-w-0 space-y-6">
             <JobNotesPanel job={data} />
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Interview rounds
-              </h3>
-              <p className="mt-2 text-sm text-slate-400 dark:text-slate-500 italic">
-                Rounds panel will land in Tasks 14–17.
-              </p>
-            </div>
+            <RoundsPanel job={data} />
           </section>
         </div>
       </div>
