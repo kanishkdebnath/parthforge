@@ -295,4 +295,106 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       return serializeJobApplication(fresh as never);
     }
   );
+
+  // POST /api/jobs/:id/contacts
+  app.post(
+    '/api/jobs/:id/contacts',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
+      const parsed = CreateContactRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+      const contact = {
+        _id: new Types.ObjectId(),
+        name: parsed.data.name,
+        role: parsed.data.role,
+        email: parsed.data.email,
+      };
+      const doc = await JobApplicationModel.findOneAndUpdate(
+        { _id: id, userId },
+        { $push: { contacts: contact } },
+        { new: true }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return reply.code(201).send(serializeJobApplication(doc as never));
+    }
+  );
+
+  // PATCH /api/jobs/:id/contacts/:contactId
+  app.patch(
+    '/api/jobs/:id/contacts/:contactId',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id, contactId } = request.params as {
+        id: string;
+        contactId: string;
+      };
+      if (!isValidId(id) || !isValidId(contactId))
+        return reply.code(404).send({ error: 'Not found' });
+      const parsed = UpdateContactRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+      const data = parsed.data;
+
+      const set: Record<string, unknown> = {};
+      const unset: Record<string, ''> = {};
+      if (data.name !== undefined) set['contacts.$[c].name'] = data.name;
+
+      // Narrow union keeps the loop honest — adding a non-nullable key here
+      // becomes a compile error, not a silent $unset.
+      type NullableContactKey = 'role' | 'email';
+      const nullable: NullableContactKey[] = ['role', 'email'];
+      for (const key of nullable) {
+        const v = data[key];
+        if (v === undefined) continue;
+        if (v === null) unset[`contacts.$[c].${key}`] = '';
+        else set[`contacts.$[c].${key}`] = v;
+      }
+
+      const update: Record<string, unknown> = {};
+      if (Object.keys(set).length > 0) update.$set = set;
+      if (Object.keys(unset).length > 0) update.$unset = unset;
+      if (Object.keys(update).length === 0) {
+        const doc = await JobApplicationModel.findOne({
+          _id: id,
+          userId,
+          'contacts._id': new Types.ObjectId(contactId),
+        }).lean();
+        if (!doc) return reply.code(404).send({ error: 'Not found' });
+        return serializeJobApplication(doc as never);
+      }
+
+      const doc = await JobApplicationModel.findOneAndUpdate(
+        { _id: id, userId, 'contacts._id': new Types.ObjectId(contactId) },
+        update,
+        { new: true, arrayFilters: [{ 'c._id': new Types.ObjectId(contactId) }] }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeJobApplication(doc as never);
+    }
+  );
+
+  // DELETE /api/jobs/:id/contacts/:contactId
+  app.delete(
+    '/api/jobs/:id/contacts/:contactId',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id, contactId } = request.params as {
+        id: string;
+        contactId: string;
+      };
+      if (!isValidId(id) || !isValidId(contactId))
+        return reply.code(404).send({ error: 'Not found' });
+      const userId = request.user!._id;
+      const doc = await JobApplicationModel.findOneAndUpdate(
+        { _id: id, userId, 'contacts._id': new Types.ObjectId(contactId) },
+        { $pull: { contacts: { _id: new Types.ObjectId(contactId) } } },
+        { new: true }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeJobApplication(doc as never);
+    }
+  );
 }
