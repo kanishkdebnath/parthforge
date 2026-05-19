@@ -7,6 +7,7 @@ import { QuickFactsBlock } from './QuickFactsBlock';
 import { TagsBlock } from './TagsBlock';
 import { LinkedRoadmapBlock } from './LinkedRoadmapBlock';
 import { ContactsBlock } from './ContactsBlock';
+import { JobActions } from './JobActions';
 
 interface JobDetailSidebarProps {
   job: JobApplication;
@@ -35,7 +36,7 @@ export function JobDetailSidebar({ job }: JobDetailSidebarProps) {
 
       <ContactsBlock job={job} />
 
-      {/* JobActions is added in task 12 */}
+      <JobActions job={job} />
     </aside>
   );
 }
