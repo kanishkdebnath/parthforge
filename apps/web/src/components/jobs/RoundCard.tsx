@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, MessageCircleQuestion, NotebookPen, Pencil, Sparkles } from 'lucide-react';
 import type { InterviewRound, RoundOutcome } from '@pathforge/shared';
 import { cn } from '@/lib/utils';
+import { useUpdateRound } from '@/hooks/useJobs';
+import { Textarea } from '@/components/ui/textarea';
 import { RoundFormDialog } from './RoundFormDialog';
 
 interface RoundCardProps {
@@ -18,6 +20,13 @@ const OUTCOME_CLASS: Record<RoundOutcome, string> = {
   failed: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
 };
 
+const OUTCOME_ORDER: RoundOutcome[] = ['pending', 'passed', 'failed'];
+function nextOutcome(o: RoundOutcome): RoundOutcome {
+  const i = OUTCOME_ORDER.indexOf(o);
+  return OUTCOME_ORDER[(i + 1) % OUTCOME_ORDER.length]!;
+  // Non-null assertion because (i + 1) % 3 is always a valid index.
+}
+
 function isUpcoming(round: InterviewRound): boolean {
   if (round.outcome !== 'pending') return false;
   if (!round.scheduledAt) return false;
@@ -33,6 +42,7 @@ function outcomeLabel(round: InterviewRound): string {
 export function RoundCard({ jobId, index, round }: RoundCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const update = useUpdateRound(jobId, round._id);
   const outcome = outcomeLabel(round);
   const outcomeClass =
     round.outcome === 'pending' && isUpcoming(round)
@@ -88,8 +98,22 @@ export function RoundCard({ jobId, index, round }: RoundCardProps) {
           <Pencil className="h-3.5 w-3.5" />
         </span>
         <span
+          role="button"
+          tabIndex={0}
+          aria-label={`Outcome ${outcome}; click to cycle`}
+          onClick={(e) => {
+            e.stopPropagation();
+            update.mutate({ outcome: nextOutcome(round.outcome) });
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              update.mutate({ outcome: nextOutcome(round.outcome) });
+            }
+          }}
           className={cn(
-            'ml-auto inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold',
+            'ml-auto inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer hover:opacity-90 transition-opacity',
             outcomeClass
           )}
         >
@@ -104,15 +128,15 @@ export function RoundCard({ jobId, index, round }: RoundCardProps) {
 
       {expanded && (
         <div className="border-t border-dashed border-slate-200 dark:border-slate-800 px-4 py-4 space-y-4">
-          <Section icon={NotebookPen} label="Pre-prep">
-            {round.prepNotes ? (
-              <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                {round.prepNotes}
-              </p>
-            ) : (
-              <Empty>What to study, who to research, questions to ask.</Empty>
-            )}
-          </Section>
+          <EditableTextSection
+            jobId={jobId}
+            roundId={round._id}
+            field="prepNotes"
+            initial={round.prepNotes}
+            label="Pre-prep"
+            placeholder="What to study, who to research, questions to ask."
+            icon={NotebookPen}
+          />
 
           <Section icon={MessageCircleQuestion} label="Questions asked">
             {round.questions.length > 0 ? (
@@ -122,19 +146,21 @@ export function RoundCard({ jobId, index, round }: RoundCardProps) {
                 ))}
               </ul>
             ) : (
-              <Empty>Log questions they asked you, one per line.</Empty>
+              <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                Log questions they asked you, one per line.
+              </p>
             )}
           </Section>
 
-          <Section icon={Sparkles} label="Experience / reflection">
-            {round.experience ? (
-              <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                {round.experience}
-              </p>
-            ) : (
-              <Empty>How it went · lessons · follow-ups.</Empty>
-            )}
-          </Section>
+          <EditableTextSection
+            jobId={jobId}
+            roundId={round._id}
+            field="experience"
+            initial={round.experience}
+            label="Experience / reflection"
+            placeholder="How it went · lessons · follow-ups."
+            icon={Sparkles}
+          />
         </div>
       )}
 
@@ -168,10 +194,95 @@ function Section({
   );
 }
 
-function Empty({ children }: { children: React.ReactNode }) {
+function EditableTextSection({
+  jobId,
+  roundId,
+  field,
+  initial,
+  label,
+  placeholder,
+  icon: Icon,
+}: {
+  jobId: string;
+  roundId: string;
+  field: 'prepNotes' | 'experience';
+  initial: string | undefined;
+  label: string;
+  placeholder: string;
+  icon: typeof NotebookPen;
+}) {
+  const update = useUpdateRound(jobId, roundId);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(initial ?? '');
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (editing && ref.current) {
+      ref.current.focus();
+      const len = ref.current.value.length;
+      ref.current.setSelectionRange(len, len);
+    }
+  }, [editing]);
+
+  useEffect(() => {
+    if (!editing) setDraft(initial ?? '');
+  }, [initial, editing]);
+
+  const save = () => {
+    const next = draft.trim();
+    if (next !== (initial ?? '').trim()) {
+      // Both fields are nullable in UpdateRoundBody — null clears, string updates.
+      update.mutate(
+        field === 'prepNotes'
+          ? { prepNotes: next || null }
+          : { experience: next || null }
+      );
+    }
+    setEditing(false);
+  };
+
   return (
-    <p className="text-sm text-slate-400 dark:text-slate-500 italic">
-      {children}
-    </p>
+    <div>
+      <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+        <Icon className="h-3 w-3 opacity-70" />
+        {label}
+      </div>
+      {!editing && initial && (
+        <p
+          onClick={() => setEditing(true)}
+          className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed cursor-text"
+        >
+          {initial}
+        </p>
+      )}
+      {!editing && !initial && (
+        <p
+          onClick={() => setEditing(true)}
+          className="text-sm text-slate-400 dark:text-slate-500 italic cursor-text"
+        >
+          {placeholder}
+        </p>
+      )}
+      {editing && (
+        <Textarea
+          ref={ref}
+          rows={4}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setDraft(initial ?? '');
+              setEditing(false);
+            }
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              save();
+            }
+          }}
+          placeholder={placeholder}
+        />
+      )}
+    </div>
   );
 }
