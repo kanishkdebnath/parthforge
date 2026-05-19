@@ -268,4 +268,31 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       return serializeJobApplication(doc as never);
     }
   );
+
+  // PUT /api/jobs/:id/rounds/order
+  app.put(
+    '/api/jobs/:id/rounds/order',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
+      const parsed = ReorderRoundsRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+
+      const doc = await JobApplicationModel.findOne({ _id: id, userId });
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+
+      const existing = doc.rounds.map((r) => String(r._id));
+      const err = validateReorderIds(existing, parsed.data.ids);
+      if (err) return reply.code(400).send({ error: err });
+
+      const byId = new Map(doc.rounds.map((r) => [String(r._id), r]));
+      const reordered = parsed.data.ids.map((rid) => byId.get(rid)!);
+      doc.rounds.splice(0, doc.rounds.length, ...reordered);
+      await doc.save();
+      const fresh = await JobApplicationModel.findOne({ _id: id, userId }).lean();
+      return serializeJobApplication(fresh as never);
+    }
+  );
 }
