@@ -6,8 +6,8 @@ import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
 import RoadmapsListPage from '@/pages/RoadmapsListPage';
 import RoadmapDetailPage from '@/pages/RoadmapDetailPage';
-import { JobsListPage } from './pages/JobsListPage';
-import { JobDetailPage } from './pages/JobDetailPage';
+import JobsListPage from '@/pages/JobsListPage';
+import JobDetailPage from '@/pages/JobDetailPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (

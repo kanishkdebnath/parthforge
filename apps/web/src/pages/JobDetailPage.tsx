@@ -1,3 +1,3 @@
-export function JobDetailPage() {
+export default function JobDetailPage() {
   return <div className="p-10">Job detail — coming up.</div>;
 }
