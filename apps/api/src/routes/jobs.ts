@@ -11,7 +11,7 @@ import {
 } from '@pathforge/shared';
 import { JobApplicationModel } from '../models/JobApplication.js';
 import { serializeJobApplication } from '../lib/job-application-helpers.js';
-import { validateReorderIds } from '../lib/roadmap-helpers.js';
+import { validateReorderIds } from '../lib/reorder.js';
 
 const OBJECT_ID = /^[a-f\d]{24}$/i;
 function isValidId(s: string | undefined): s is string {

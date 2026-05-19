@@ -16,26 +16,7 @@ export function recomputeMilestoneCompletedAt(
   return new Date();
 }
 
-/**
- * Validates that the submitted reorder set is a permutation of the existing
- * set. Returns null on success, or an error message on mismatch (extra ids,
- * missing ids, or duplicates).
- */
-export function validateReorderIds(
-  existing: ReadonlyArray<string>,
-  submitted: ReadonlyArray<string>
-): string | null {
-  const msg = 'Reorder set does not match current order';
-  if (existing.length !== submitted.length) return msg;
-  const existingSet = new Set(existing);
-  const seen = new Set<string>();
-  for (const id of submitted) {
-    if (!existingSet.has(id)) return msg;
-    if (seen.has(id)) return msg;
-    seen.add(id);
-  }
-  return null;
-}
+export { validateReorderIds } from './reorder.js';
 
 /**
  * Converts a Mongoose lean roadmap doc into the wire `Roadmap` shape:
