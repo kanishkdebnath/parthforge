@@ -95,7 +95,7 @@ export function QuickFactsBlock({ job }: QuickFactsBlockProps) {
           rel="noopener noreferrer"
           className="font-mono text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
         >
-          {resumeLabel(job.resumeUrl)} ↗
+          {resumeLabel(job.resumeUrl) ?? job.resumeUrl} ↗
         </a>
       ),
     });

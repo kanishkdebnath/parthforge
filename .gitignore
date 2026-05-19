@@ -9,3 +9,6 @@ coverage/
 .playwright-mcp/
 task*.png
 .superpowers/
+
+# Stray .js transpilations of .tsx sources (Vite reads .tsx directly)
+apps/web/src/**/*.js

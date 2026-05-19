@@ -6,6 +6,7 @@ import { EmptyJobsState } from '@/components/jobs/EmptyJobsState';
 import { NoJobResultsState } from '@/components/jobs/NoJobResultsState';
 import { JobListRow } from '@/components/jobs/JobListRow';
 import { NewJobDialog } from '@/components/jobs/NewJobDialog';
+import { statusLabel } from '@/lib/jobs-formatting';
 
 export default function JobsListPage({ archived = false }: { archived?: boolean } = {}) {
   const { data, isPending } = useJobs({ archived });
@@ -88,7 +89,9 @@ export default function JobsListPage({ archived = false }: { archived?: boolean 
         {showNoResults && (
           <NoJobResultsState
             query={query}
-            statusFilterLabel={statusFilter === 'all' ? undefined : statusFilter}
+            statusFilterLabel={
+              statusFilter === 'all' ? undefined : statusLabel(statusFilter)
+            }
           />
         )}
 
