@@ -28,4 +28,33 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       .lean();
     return docs.map((d) => serializeJobApplication(d as never));
   });
+
+  // POST /api/jobs
+  app.post('/api/jobs', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const parsed = CreateJobApplicationRequestSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: 'Invalid body' });
+    }
+    const userId = request.user!._id;
+    const doc = await JobApplicationModel.create({
+      userId,
+      company: parsed.data.company,
+      role: parsed.data.role,
+      jobUrl: parsed.data.jobUrl,
+      status: parsed.data.status ?? 'saved',
+      appliedAt: parsed.data.appliedAt,
+      resumeUrl: parsed.data.resumeUrl,
+      location: parsed.data.location,
+      workMode: parsed.data.workMode,
+      salaryRange: parsed.data.salaryRange,
+      offerAmount: parsed.data.offerAmount,
+      tags: parsed.data.tags ?? [],
+      notes: parsed.data.notes,
+      contacts: [],
+      rounds: [],
+      links: parsed.data.links ?? {},
+      archived: false,
+    });
+    return reply.code(201).send(serializeJobApplication(doc.toObject() as never));
+  });
 }
