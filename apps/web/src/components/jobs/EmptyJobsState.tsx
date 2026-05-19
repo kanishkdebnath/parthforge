@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface EmptyJobsStateProps {
@@ -21,7 +22,8 @@ export function EmptyJobsState({ archived, onNewClick }: EmptyJobsStateProps) {
           onClick={onNewClick}
           className="mt-6 bg-brand text-white hover:bg-brand-hover"
         >
-          + Track your first application
+          <Plus className="h-4 w-4 mr-1.5" />
+          Track your first application
         </Button>
       )}
     </div>

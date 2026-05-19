@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Archive, Pencil, Trash2 } from 'lucide-react';
+import { Archive, FileText, Pencil, Trash2 } from 'lucide-react';
 import type { JobApplication } from '@pathforge/shared';
 import { useArchiveJob } from '@/hooks/useJobs';
 import { EditJobDialog } from './EditJobDialog';
 import { DeleteJobConfirm } from './DeleteJobConfirm';
+import { ExportReportDialog } from './ExportReportDialog';
 
 interface JobActionsProps {
   job: JobApplication;
@@ -13,6 +14,7 @@ export function JobActions({ job }: JobActionsProps) {
   const archive = useArchiveJob(job._id);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   return (
     <div className="space-y-1 pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -23,6 +25,14 @@ export function JobActions({ job }: JobActionsProps) {
       >
         <Pencil className="h-3.5 w-3.5" />
         Edit details
+      </button>
+      <button
+        type="button"
+        onClick={() => setExportOpen(true)}
+        className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        <FileText className="h-3.5 w-3.5" />
+        Export report
       </button>
       <button
         type="button"
@@ -42,6 +52,11 @@ export function JobActions({ job }: JobActionsProps) {
       </button>
 
       <EditJobDialog job={job} open={editOpen} onOpenChange={setEditOpen} />
+      <ExportReportDialog
+        job={job}
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+      />
       <DeleteJobConfirm
         job={job}
         open={deleteOpen}

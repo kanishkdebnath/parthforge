@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface JobsListHeaderProps {
@@ -23,7 +24,8 @@ export function JobsListHeader({ archived, onNewClick }: JobsListHeaderProps) {
           onClick={onNewClick}
           className="bg-brand text-white hover:bg-brand-hover shrink-0"
         >
-          + New application
+          <Plus className="h-4 w-4 mr-1.5" />
+          New application
         </Button>
       )}
     </div>

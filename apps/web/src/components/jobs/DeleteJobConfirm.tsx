@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Trash2 } from 'lucide-react';
 import type { JobApplication } from '@pathforge/shared';
 import { useDeleteJob } from '@/hooks/useJobs';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ export function DeleteJobConfirm({
             disabled={del.isPending}
             className="bg-red-600 hover:bg-red-700 text-white"
           >
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
             {del.isPending ? 'Deleting…' : 'Delete forever'}
           </Button>
         </DialogFooter>

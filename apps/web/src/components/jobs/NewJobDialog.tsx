@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import type { JobApplicationStatus, WorkMode } from '@pathforge/shared';
 import { useCreateJob } from '@/hooks/useJobs';
 import { Button } from '@/components/ui/button';
@@ -271,6 +271,7 @@ export function NewJobDialog({ open, onOpenChange }: NewJobDialogProps) {
             disabled={!company.trim() || !role.trim() || create.isPending}
             className="bg-brand text-white hover:bg-brand-hover"
           >
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
             {create.isPending ? 'Creating…' : 'Create application'}
           </Button>
         </DialogFooter>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Check } from 'lucide-react';
 import type {
   JobApplication,
   JobApplicationStatus,
@@ -281,6 +281,7 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
             disabled={!company.trim() || !role.trim() || update.isPending}
             className="bg-brand text-white hover:bg-brand-hover"
           >
+            <Check className="h-3.5 w-3.5 mr-1.5" />
             {update.isPending ? 'Saving…' : 'Save'}
           </Button>
         </DialogFooter>

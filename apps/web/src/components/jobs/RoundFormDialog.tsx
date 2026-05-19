@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, Plus, Trash2 } from 'lucide-react';
 import type { InterviewRound, RoundOutcome } from '@pathforge/shared';
 import {
   useAddRound,
@@ -249,6 +249,7 @@ export function RoundFormDialog({
               }
               className="text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
             >
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
               Delete round
             </Button>
           ) : (
@@ -263,6 +264,11 @@ export function RoundFormDialog({
               disabled={!name.trim() || pending}
               className="bg-brand text-white hover:bg-brand-hover"
             >
+              {round ? (
+                <Check className="h-3.5 w-3.5 mr-1.5" />
+              ) : (
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+              )}
               {pending ? 'Saving…' : round ? 'Save' : 'Add round'}
             </Button>
           </div>
