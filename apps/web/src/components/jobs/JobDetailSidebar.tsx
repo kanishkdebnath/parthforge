@@ -5,6 +5,7 @@ import { JobIdentityHero } from './JobIdentityHero';
 import { StatusBlock } from './StatusBlock';
 import { QuickFactsBlock } from './QuickFactsBlock';
 import { TagsBlock } from './TagsBlock';
+import { LinkedRoadmapBlock } from './LinkedRoadmapBlock';
 
 interface JobDetailSidebarProps {
   job: JobApplication;
@@ -29,7 +30,9 @@ export function JobDetailSidebar({ job }: JobDetailSidebarProps) {
 
       <TagsBlock job={job} />
 
-      {/* LinkedRoadmapBlock, ContactsBlock, JobActions are added in tasks 10-12 */}
+      <LinkedRoadmapBlock job={job} />
+
+      {/* ContactsBlock, JobActions are added in tasks 11-12 */}
     </aside>
   );
 }
