@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import type { JobApplication } from '@pathforge/shared';
 import { JobIdentityHero } from './JobIdentityHero';
+import { StatusBlock } from './StatusBlock';
 
 interface JobDetailSidebarProps {
   job: JobApplication;
@@ -20,7 +21,9 @@ export function JobDetailSidebar({ job }: JobDetailSidebarProps) {
 
       <JobIdentityHero job={job} />
 
-      {/* StatusBlock, QuickFactsBlock, TagsBlock, LinkedRoadmapBlock, ContactsBlock, JobActions are added in tasks 7-12 */}
+      <StatusBlock job={job} />
+
+      {/* QuickFactsBlock, TagsBlock, LinkedRoadmapBlock, ContactsBlock, JobActions are added in tasks 8-12 */}
     </aside>
   );
 }
