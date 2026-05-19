@@ -13,6 +13,7 @@ import { api } from '../lib/api';
 
 interface ServerErrorBody {
   error?: string;
+  message?: string;
   details?: Array<{ path: string; message: string }>;
 }
 
@@ -34,6 +35,15 @@ function extractMessage(err: unknown): string | undefined {
     if (data?.details && data.details.length > 0) {
       const first = data.details[0]!;
       return first.path ? `${first.path}: ${first.message}` : first.message;
+    }
+    // Fastify's default error body has both `error` (the status name, e.g.
+    // "Not Found") and `message` (the actionable detail, e.g.
+    // "Route POST:/api/jobs not found"). Prefer message when it adds info.
+    if (
+      typeof data?.message === 'string' &&
+      data.message !== data.error
+    ) {
+      return data.message;
     }
     if (typeof data?.error === 'string') return data.error;
     if (!err.response) return `Network error: ${err.message}`;
