@@ -1,3 +1,116 @@
+import { useMemo, useState } from 'react';
+import { useJobs } from '@/hooks/useJobs';
+import { JobsListHeader } from '@/components/jobs/JobsListHeader';
+import { JobsToolbar, type StatusFilter } from '@/components/jobs/JobsToolbar';
+import { EmptyJobsState } from '@/components/jobs/EmptyJobsState';
+import { NoJobResultsState } from '@/components/jobs/NoJobResultsState';
+
 export default function JobsListPage({ archived = false }: { archived?: boolean } = {}) {
-  return <div className="p-10">Jobs list (archived={String(archived)}) — coming up.</div>;
+  const { data, isPending } = useJobs({ archived });
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  // Counts always reflect the unfiltered active set so the user can see
+  // pipeline shape at a glance — they don't decrease as the user types.
+  const counts = useMemo(() => {
+    const c: Record<StatusFilter, number> = {
+      all: 0,
+      saved: 0,
+      applied: 0,
+      interviewing: 0,
+      offer: 0,
+      rejected: 0,
+      withdrawn: 0,
+    };
+    if (!data) return c;
+    c.all = data.length;
+    for (const j of data) {
+      c[j.status] = (c[j.status] ?? 0) + 1;
+    }
+    return c;
+  }, [data]);
+
+  const filtered = useMemo(() => {
+    if (!data) return [];
+    const q = query.trim().toLowerCase();
+    return data.filter((j) => {
+      if (statusFilter !== 'all' && j.status !== statusFilter) return false;
+      if (!q) return true;
+      const hay = [j.company, j.role, ...j.tags]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [data, query, statusFilter]);
+
+  const showEmpty = !isPending && (data?.length ?? 0) === 0;
+  const showNoResults =
+    !isPending && (data?.length ?? 0) > 0 && filtered.length === 0;
+  const showList = !isPending && filtered.length > 0;
+
+  return (
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="container max-w-6xl py-10 px-6">
+        <JobsListHeader
+          archived={archived}
+          onNewClick={() => {
+            // NewJobDialog wiring lands in Task 5; placeholder for now.
+            console.log('open new job dialog');
+          }}
+        />
+
+        <JobsToolbar
+          archived={archived}
+          query={query}
+          onQueryChange={setQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          counts={counts}
+        />
+
+        {isPending && (
+          <p className="mt-10 text-sm text-slate-500 dark:text-slate-400">
+            Loading…
+          </p>
+        )}
+
+        {showEmpty && (
+          <EmptyJobsState
+            archived={archived}
+            onNewClick={() => console.log('open new job dialog')}
+          />
+        )}
+
+        {showNoResults && (
+          <NoJobResultsState
+            query={query}
+            statusFilterLabel={statusFilter === 'all' ? undefined : statusFilter}
+          />
+        )}
+
+        {showList && (
+          <div className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
+            {/* JobListRow rendering lands in Task 4 */}
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+              {filtered.map((j) => (
+                <li
+                  key={j._id}
+                  className="px-5 py-4 text-sm text-slate-700 dark:text-slate-300"
+                >
+                  <span className="font-medium text-slate-900 dark:text-slate-100">
+                    {j.company}
+                  </span>{' '}
+                  · {j.role} ·{' '}
+                  <span className="text-slate-500 dark:text-slate-400">
+                    {j.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </main>
+  );
 }
