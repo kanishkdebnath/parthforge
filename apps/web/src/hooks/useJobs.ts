@@ -9,6 +9,49 @@ import type {
 } from '@pathforge/shared';
 import { api } from '../lib/api';
 
+// ---- Error helpers ----
+
+interface ServerErrorBody {
+  error?: string;
+  details?: Array<{ path: string; message: string }>;
+}
+
+/**
+ * Surface a useful error message in the toast — server validation detail
+ * when the API returns one, otherwise the generic fallback.
+ */
+function toastError(fallback: string, err: unknown): void {
+  toast.error(extractMessage(err) ?? fallback, {
+    description: extractDescription(err),
+  });
+}
+
+function extractMessage(err: unknown): string | undefined {
+  if (err instanceof AxiosError) {
+    const status = err.response?.status;
+    if (status === 401) return 'Session expired — sign in again';
+    const data = err.response?.data as ServerErrorBody | undefined;
+    if (data?.details && data.details.length > 0) {
+      const first = data.details[0]!;
+      return first.path ? `${first.path}: ${first.message}` : first.message;
+    }
+    if (typeof data?.error === 'string') return data.error;
+    if (!err.response) return `Network error: ${err.message}`;
+  }
+  return undefined;
+}
+
+function extractDescription(err: unknown): string | undefined {
+  if (!(err instanceof AxiosError)) return undefined;
+  const data = err.response?.data as ServerErrorBody | undefined;
+  if (!data?.details || data.details.length <= 1) return undefined;
+  // More than one issue — list the rest as a secondary line.
+  return data.details
+    .slice(1)
+    .map((d) => (d.path ? `${d.path}: ${d.message}` : d.message))
+    .join(' · ');
+}
+
 // ---- Query keys ----
 const LIST_KEY = (archived: boolean) =>
   ['jobs', 'list', { archived }] as const;
@@ -118,8 +161,8 @@ export function useCreateJob() {
       qc.setQueryData(DETAIL_KEY(fresh._id), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
-    onError: () => {
-      toast.error('Could not create application');
+    onError: (err) => {
+      toastError('Could not create application', err);
     },
   });
 }
@@ -146,9 +189,9 @@ export function useUpdateJob(id: string) {
       });
       return { prev };
     },
-    onError: (_err, _body, ctx) => {
+    onError: (err, _body, ctx) => {
       if (ctx?.prev) qc.setQueryData(DETAIL_KEY(id), ctx.prev);
-      toast.error('Could not save changes');
+      toastError('Could not save changes', err);
     },
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(id), fresh);
@@ -175,9 +218,9 @@ export function useArchiveJob(id: string) {
       }
       return { prev };
     },
-    onError: (_err, _archived, ctx) => {
+    onError: (err, _archived, ctx) => {
       if (ctx?.prev) qc.setQueryData(DETAIL_KEY(id), ctx.prev);
-      toast.error('Could not change archive state');
+      toastError('Could not change archive state', err);
     },
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(id), fresh);
@@ -196,8 +239,8 @@ export function useDeleteJob(id: string) {
       qc.removeQueries({ queryKey: DETAIL_KEY(id) });
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
-    onError: () => {
-      toast.error('Could not delete application');
+    onError: (err) => {
+      toastError('Could not delete application', err);
     },
   });
 }
@@ -215,8 +258,8 @@ export function useAddRound(jobId: string) {
       qc.setQueryData(DETAIL_KEY(jobId), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
-    onError: () => {
-      toast.error('Could not add round');
+    onError: (err) => {
+      toastError('Could not add round', err);
     },
   });
 }
@@ -243,9 +286,9 @@ export function useUpdateRound(jobId: string, roundId: string) {
       qc.setQueryData(DETAIL_KEY(jobId), next);
       return { prev };
     },
-    onError: (_err, _body, ctx) => {
+    onError: (err, _body, ctx) => {
       if (ctx?.prev) qc.setQueryData(DETAIL_KEY(jobId), ctx.prev);
-      toast.error('Could not save round');
+      toastError('Could not save round', err);
     },
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(jobId), fresh);
@@ -265,8 +308,8 @@ export function useDeleteRound(jobId: string, roundId: string) {
       qc.setQueryData(DETAIL_KEY(jobId), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
-    onError: () => {
-      toast.error('Could not delete round');
+    onError: (err) => {
+      toastError('Could not delete round', err);
     },
   });
 }
@@ -292,9 +335,9 @@ export function useReorderRounds(jobId: string) {
       }
       return { prev };
     },
-    onError: (_err, _ids, ctx) => {
+    onError: (err, _ids, ctx) => {
       if (ctx?.prev) qc.setQueryData(DETAIL_KEY(jobId), ctx.prev);
-      toast.error('Could not save round order');
+      toastError('Could not save round order', err);
     },
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(jobId), fresh);
@@ -315,8 +358,8 @@ export function useAddContact(jobId: string) {
       qc.setQueryData(DETAIL_KEY(jobId), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
-    onError: () => {
-      toast.error('Could not add contact');
+    onError: (err) => {
+      toastError('Could not add contact', err);
     },
   });
 }
@@ -335,8 +378,8 @@ export function useUpdateContact(jobId: string, contactId: string) {
       qc.setQueryData(DETAIL_KEY(jobId), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
-    onError: () => {
-      toast.error('Could not save contact');
+    onError: (err) => {
+      toastError('Could not save contact', err);
     },
   });
 }
@@ -352,8 +395,8 @@ export function useDeleteContact(jobId: string, contactId: string) {
       qc.setQueryData(DETAIL_KEY(jobId), fresh);
       qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
-    onError: () => {
-      toast.error('Could not delete contact');
+    onError: (err) => {
+      toastError('Could not delete contact', err);
     },
   });
 }

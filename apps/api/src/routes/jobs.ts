@@ -1,5 +1,6 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import { Types } from 'mongoose';
+import { z } from 'zod';
 import {
   CreateJobApplicationRequestSchema,
   UpdateJobApplicationRequestSchema,
@@ -18,6 +19,19 @@ function isValidId(s: string | undefined): s is string {
   return typeof s === 'string' && OBJECT_ID.test(s);
 }
 
+// Returns a 400 with field-level Zod issue detail so clients can surface
+// actionable error messages (e.g. "jobUrl: URL must use http or https")
+// instead of the bare "Invalid body".
+function sendValidationError(reply: FastifyReply, error: z.ZodError) {
+  return reply.code(400).send({
+    error: 'Invalid body',
+    details: error.issues.map((i) => ({
+      path: i.path.join('.'),
+      message: i.message,
+    })),
+  });
+}
+
 export async function jobsRoutes(app: FastifyInstance): Promise<void> {
   // GET /api/jobs?archived=true|false
   app.get('/api/jobs', { preHandler: [app.authenticate] }, async (request) => {
@@ -33,7 +47,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
   app.post('/api/jobs', { preHandler: [app.authenticate] }, async (request, reply) => {
     const parsed = CreateJobApplicationRequestSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({ error: 'Invalid body' });
+      return sendValidationError(reply, parsed.error);
     }
     const userId = request.user!._id;
     const doc = await JobApplicationModel.create({
@@ -73,7 +87,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
     const { id } = request.params as { id: string };
     if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
     const parsed = UpdateJobApplicationRequestSchema.safeParse(request.body);
-    if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
     const userId = request.user!._id;
     const data = parsed.data;
 
@@ -161,7 +175,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       const { id } = request.params as { id: string };
       if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
       const parsed = CreateRoundRequestSchema.safeParse(request.body);
-      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
       const userId = request.user!._id;
       const round = {
         _id: new Types.ObjectId(),
@@ -193,7 +207,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       if (!isValidId(id) || !isValidId(roundId))
         return reply.code(404).send({ error: 'Not found' });
       const parsed = UpdateRoundRequestSchema.safeParse(request.body);
-      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
       const userId = request.user!._id;
       const data = parsed.data;
 
@@ -277,7 +291,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       const { id } = request.params as { id: string };
       if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
       const parsed = ReorderRoundsRequestSchema.safeParse(request.body);
-      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
       const userId = request.user!._id;
 
       const doc = await JobApplicationModel.findOne({ _id: id, userId });
@@ -304,7 +318,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       const { id } = request.params as { id: string };
       if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
       const parsed = CreateContactRequestSchema.safeParse(request.body);
-      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
       const userId = request.user!._id;
       const contact = {
         _id: new Types.ObjectId(),
@@ -334,7 +348,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       if (!isValidId(id) || !isValidId(contactId))
         return reply.code(404).send({ error: 'Not found' });
       const parsed = UpdateContactRequestSchema.safeParse(request.body);
-      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
       const userId = request.user!._id;
       const data = parsed.data;
 
