@@ -1,10 +1,11 @@
 import { Pencil, Trash2 } from 'lucide-react';
 import type { Contact } from '@pathforge/shared';
+import { useDeleteContact } from '@/hooks/useJobs';
 
 interface ContactCardProps {
+  jobId: string;
   contact: Contact;
   onEdit: () => void;
-  onDelete: () => void;
 }
 
 function initials(name: string): string {
@@ -12,7 +13,9 @@ function initials(name: string): string {
   return parts.map((p) => p.charAt(0).toUpperCase()).join('');
 }
 
-export function ContactCard({ contact, onEdit, onDelete }: ContactCardProps) {
+export function ContactCard({ jobId, contact, onEdit }: ContactCardProps) {
+  const del = useDeleteContact(jobId, contact._id);
+
   return (
     <div className="group flex items-center gap-2.5 py-2">
       <div className="h-7 w-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center text-[10px] font-semibold">
@@ -38,9 +41,10 @@ export function ContactCard({ contact, onEdit, onDelete }: ContactCardProps) {
       </button>
       <button
         type="button"
-        onClick={onDelete}
+        onClick={() => del.mutate()}
+        disabled={del.isPending}
         aria-label="Delete contact"
-        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-opacity p-1"
+        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-opacity p-1 disabled:opacity-30"
       >
         <Trash2 className="h-3 w-3" />
       </button>

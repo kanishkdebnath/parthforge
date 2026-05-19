@@ -45,14 +45,9 @@ export function ContactsBlock({ job }: ContactsBlockProps) {
           {job.contacts.map((c) => (
             <ContactCard
               key={c._id}
+              jobId={job._id}
               contact={c}
               onEdit={() => openEdit(c)}
-              onDelete={() => {
-                // Both pencil and trash icons open the edit dialog, where the
-                // destructive Delete button lives. Keeps destructive action
-                // one deliberate click away from the row.
-                openEdit(c);
-              }}
             />
           ))}
         </div>
