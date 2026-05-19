@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, MessageCircleQuestion, NotebookPen, Pencil, Sparkles } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { ChevronDown, ChevronRight, GripVertical, MessageCircleQuestion, NotebookPen, Pencil, Sparkles } from 'lucide-react';
 import type { InterviewRound, RoundOutcome } from '@pathforge/shared';
 import { cn } from '@/lib/utils';
 import { useUpdateRound } from '@/hooks/useJobs';
@@ -49,11 +51,22 @@ export function RoundCard({ jobId, index, round }: RoundCardProps) {
       ? 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300'
       : OUTCOME_CLASS[round.outcome];
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: round._id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={cn(
         'group border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 transition-colors',
-        !expanded && 'hover:bg-slate-50/60 dark:hover:bg-slate-800/40'
+        !expanded && 'hover:bg-slate-50/60 dark:hover:bg-slate-800/40',
+        isDragging && 'shadow-md ring-1 ring-slate-300 dark:ring-slate-700 z-10'
       )}
     >
       <button
@@ -61,6 +74,17 @@ export function RoundCard({ jobId, index, round }: RoundCardProps) {
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center gap-3 px-4 py-3 text-left"
       >
+        <span
+          {...attributes}
+          {...listeners}
+          role="button"
+          tabIndex={0}
+          aria-label="Drag round"
+          onClick={(e) => e.stopPropagation()}
+          className="text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </span>
         <span className="h-6 w-6 rounded-md bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 inline-flex items-center justify-center text-[11px] font-bold">
           {index}
         </span>

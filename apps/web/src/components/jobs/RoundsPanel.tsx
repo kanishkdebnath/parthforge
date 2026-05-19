@@ -1,9 +1,25 @@
 import { useState } from 'react';
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';
 import type { JobApplication } from '@pathforge/shared';
 import { Button } from '@/components/ui/button';
 import { RoundCard } from './RoundCard';
 import { RoundFormDialog } from './RoundFormDialog';
+import { useReorderRounds } from '@/hooks/useJobs';
 
 interface RoundsPanelProps {
   job: JobApplication;
@@ -13,6 +29,26 @@ export function RoundsPanel({ job }: RoundsPanelProps) {
   const [addOpen, setAddOpen] = useState(false);
   const total = job.rounds.length;
   const done = job.rounds.filter((r) => r.outcome === 'passed').length;
+
+  const reorder = useReorderRounds(job._id);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const ids = job.rounds.map((r) => r._id);
+    const oldIndex = ids.indexOf(String(active.id));
+    const newIndex = ids.indexOf(String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+    const next = arrayMove(ids, oldIndex, newIndex);
+    reorder.mutate(next);
+  };
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
@@ -43,11 +79,22 @@ export function RoundsPanel({ job }: RoundsPanelProps) {
           No interview rounds yet. Add one when you have a phone screen scheduled.
         </p>
       ) : (
-        <div className="space-y-2.5">
-          {job.rounds.map((r, idx) => (
-            <RoundCard key={r._id} jobId={job._id} index={idx + 1} round={r} />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={job.rounds.map((r) => r._id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2.5">
+              {job.rounds.map((r, idx) => (
+                <RoundCard key={r._id} jobId={job._id} index={idx + 1} round={r} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       <RoundFormDialog jobId={job._id} open={addOpen} onOpenChange={setAddOpen} />
