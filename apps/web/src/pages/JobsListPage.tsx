@@ -4,6 +4,7 @@ import { JobsListHeader } from '@/components/jobs/JobsListHeader';
 import { JobsToolbar, type StatusFilter } from '@/components/jobs/JobsToolbar';
 import { EmptyJobsState } from '@/components/jobs/EmptyJobsState';
 import { NoJobResultsState } from '@/components/jobs/NoJobResultsState';
+import { JobListRow } from '@/components/jobs/JobListRow';
 
 export default function JobsListPage({ archived = false }: { archived?: boolean } = {}) {
   const { data, isPending } = useJobs({ archived });
@@ -90,24 +91,10 @@ export default function JobsListPage({ archived = false }: { archived?: boolean 
         )}
 
         {showList && (
-          <div className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
-            {/* JobListRow rendering lands in Task 4 */}
-            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filtered.map((j) => (
-                <li
-                  key={j._id}
-                  className="px-5 py-4 text-sm text-slate-700 dark:text-slate-300"
-                >
-                  <span className="font-medium text-slate-900 dark:text-slate-100">
-                    {j.company}
-                  </span>{' '}
-                  · {j.role} ·{' '}
-                  <span className="text-slate-500 dark:text-slate-400">
-                    {j.status}
-                  </span>
-                </li>
-              ))}
-            </ul>
+          <div className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800">
+            {filtered.map((j) => (
+              <JobListRow key={j._id} job={j} />
+            ))}
           </div>
         )}
       </div>
