@@ -324,6 +324,7 @@ export function useUpdateContact(jobId: string, contactId: string) {
     },
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(jobId), fresh);
+      qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
     onError: () => {
       toast.error('Could not save contact');
@@ -340,6 +341,7 @@ export function useDeleteContact(jobId: string, contactId: string) {
     },
     onSuccess: (fresh) => {
       qc.setQueryData(DETAIL_KEY(jobId), fresh);
+      qc.invalidateQueries({ queryKey: LIST_PREFIX });
     },
     onError: () => {
       toast.error('Could not delete contact');
