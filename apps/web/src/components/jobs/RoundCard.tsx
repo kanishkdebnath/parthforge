@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, MessageCircleQuestion, NotebookPen, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronRight, MessageCircleQuestion, NotebookPen, Pencil, Sparkles } from 'lucide-react';
 import type { InterviewRound, RoundOutcome } from '@pathforge/shared';
 import { cn } from '@/lib/utils';
+import { RoundFormDialog } from './RoundFormDialog';
 
 interface RoundCardProps {
+  jobId: string;
   index: number;
   round: InterviewRound;
 }
@@ -28,8 +30,9 @@ function outcomeLabel(round: InterviewRound): string {
   return round.outcome === 'passed' ? 'Passed' : 'Failed';
 }
 
-export function RoundCard({ index, round }: RoundCardProps) {
+export function RoundCard({ jobId, index, round }: RoundCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const outcome = outcomeLabel(round);
   const outcomeClass =
     round.outcome === 'pending' && isUpcoming(round)
@@ -39,7 +42,7 @@ export function RoundCard({ index, round }: RoundCardProps) {
   return (
     <div
       className={cn(
-        'border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 transition-colors',
+        'group border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 transition-colors',
         !expanded && 'hover:bg-slate-50/60 dark:hover:bg-slate-800/40'
       )}
     >
@@ -62,6 +65,27 @@ export function RoundCard({ index, round }: RoundCardProps) {
             })}`}
           {round.durationMinutes && ` · ${round.durationMinutes} min`}
           {round.interviewer && ` · ${round.interviewer}`}
+        </span>
+        {/* Edit affordance: span role="button" inside toggle button avoids nested <button>.
+            stopPropagation prevents bubbling to the expand toggle. */}
+        <span
+          role="button"
+          tabIndex={0}
+          aria-label="Edit round"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              setEditOpen(true);
+            }
+          }}
+          className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 transition-opacity"
+        >
+          <Pencil className="h-3.5 w-3.5" />
         </span>
         <span
           className={cn(
@@ -113,6 +137,13 @@ export function RoundCard({ index, round }: RoundCardProps) {
           </Section>
         </div>
       )}
+
+      <RoundFormDialog
+        jobId={jobId}
+        round={round}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </div>
   );
 }

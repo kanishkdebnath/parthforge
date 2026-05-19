@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import type { JobApplication } from '@pathforge/shared';
 import { Button } from '@/components/ui/button';
 import { RoundCard } from './RoundCard';
+import { RoundFormDialog } from './RoundFormDialog';
 
 interface RoundsPanelProps {
   job: JobApplication;
@@ -44,32 +45,12 @@ export function RoundsPanel({ job }: RoundsPanelProps) {
       ) : (
         <div className="space-y-2.5">
           {job.rounds.map((r, idx) => (
-            <RoundCard key={r._id} index={idx + 1} round={r} />
+            <RoundCard key={r._id} jobId={job._id} index={idx + 1} round={r} />
           ))}
         </div>
       )}
 
-      {/* RoundFormDialog wiring lands in Task 15; for now this is a stub. */}
-      {addOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          onClick={() => setAddOpen(false)}
-        >
-          <div
-            className="bg-white dark:bg-slate-900 rounded-xl p-6 max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-sm text-slate-700 dark:text-slate-300">
-              Round form dialog lands in Task 15.
-            </p>
-            <Button className="mt-4" onClick={() => setAddOpen(false)}>
-              Close
-            </Button>
-          </div>
-        </div>
-      )}
+      <RoundFormDialog jobId={job._id} open={addOpen} onOpenChange={setAddOpen} />
     </div>
   );
 }
