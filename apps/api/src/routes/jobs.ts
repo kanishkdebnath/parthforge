@@ -88,7 +88,18 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
     if (data.archived !== undefined) set.archived = data.archived;
 
     // Nullable scalars: null → $unset, value → $set, undefined → skip.
-    const nullable: Array<keyof typeof data> = [
+    // Narrow union keeps the loop honest — adding a non-nullable key here
+    // becomes a compile error, not a silent $unset.
+    type NullableScalarKey =
+      | 'jobUrl'
+      | 'appliedAt'
+      | 'resumeUrl'
+      | 'location'
+      | 'workMode'
+      | 'salaryRange'
+      | 'offerAmount'
+      | 'notes';
+    const nullable: NullableScalarKey[] = [
       'jobUrl',
       'appliedAt',
       'resumeUrl',
@@ -101,8 +112,8 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
     for (const key of nullable) {
       const v = data[key];
       if (v === undefined) continue;
-      if (v === null) unset[key as string] = '';
-      else set[key as string] = v;
+      if (v === null) unset[key] = '';
+      else set[key] = v;
     }
 
     // links is its own small object — patch by replacement (it has only one
