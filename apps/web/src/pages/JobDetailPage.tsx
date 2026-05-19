@@ -24,6 +24,8 @@ export default function JobDetailPage() {
       <NotFoundPanel
         title="Application not found."
         detail="It may have been deleted or you do not have access."
+        backHref="/jobs"
+        backLabel="Back to applications"
       />
     );
   }
