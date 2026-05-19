@@ -1,0 +1,26 @@
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import type { JobApplication } from '@pathforge/shared';
+import { JobIdentityHero } from './JobIdentityHero';
+
+interface JobDetailSidebarProps {
+  job: JobApplication;
+}
+
+export function JobDetailSidebar({ job }: JobDetailSidebarProps) {
+  return (
+    <aside className="w-full lg:w-[320px] lg:shrink-0 lg:sticky lg:top-20 lg:self-start space-y-6">
+      <Link
+        to={job.archived ? '/jobs/archived' : '/jobs'}
+        className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        {job.archived ? 'Archive' : 'Applications'}
+      </Link>
+
+      <JobIdentityHero job={job} />
+
+      {/* StatusBlock, QuickFactsBlock, TagsBlock, LinkedRoadmapBlock, ContactsBlock, JobActions are added in tasks 7-12 */}
+    </aside>
+  );
+}
