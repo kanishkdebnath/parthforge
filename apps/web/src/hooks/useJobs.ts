@@ -33,10 +33,19 @@ type CreateJobBody = {
 };
 
 type UpdateJobBody = {
-  [K in keyof CreateJobBody]?:
-    | CreateJobBody[K]
-    | null;
-} & {
+  company?: string | null;
+  role?: string | null;
+  jobUrl?: string | null;
+  status?: JobApplicationStatus | null;
+  appliedAt?: Date | null;
+  resumeUrl?: string | null;
+  location?: string | null;
+  workMode?: WorkMode | null;
+  salaryRange?: string | null;
+  offerAmount?: string | null;
+  tags?: string[] | null;
+  notes?: string | null;
+  links?: { roadmapId?: string | null };
   archived?: boolean;
 };
 

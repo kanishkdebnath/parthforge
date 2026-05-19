@@ -108,7 +108,7 @@ export function EditJobDialog({ job, open, onOpenChange }: EditJobDialogProps) {
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean),
-        links: { roadmapId: roadmapId ?? undefined },
+        links: { roadmapId: roadmapId ?? null },
       },
       { onSuccess: () => onOpenChange(false) }
     );
