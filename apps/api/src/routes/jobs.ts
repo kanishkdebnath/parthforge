@@ -152,4 +152,120 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
     if (result.deletedCount === 0) return reply.code(404).send({ error: 'Not found' });
     return { ok: true };
   });
+
+  // POST /api/jobs/:id/rounds
+  app.post(
+    '/api/jobs/:id/rounds',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
+      const parsed = CreateRoundRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+      const round = {
+        _id: new Types.ObjectId(),
+        name: parsed.data.name,
+        scheduledAt: parsed.data.scheduledAt,
+        durationMinutes: parsed.data.durationMinutes,
+        interviewer: parsed.data.interviewer,
+        outcome: parsed.data.outcome ?? 'pending',
+        prepNotes: parsed.data.prepNotes,
+        questions: parsed.data.questions ?? [],
+        experience: parsed.data.experience,
+      };
+      const doc = await JobApplicationModel.findOneAndUpdate(
+        { _id: id, userId },
+        { $push: { rounds: round } },
+        { new: true }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return reply.code(201).send(serializeJobApplication(doc as never));
+    }
+  );
+
+  // PATCH /api/jobs/:id/rounds/:roundId
+  app.patch(
+    '/api/jobs/:id/rounds/:roundId',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id, roundId } = request.params as { id: string; roundId: string };
+      if (!isValidId(id) || !isValidId(roundId))
+        return reply.code(404).send({ error: 'Not found' });
+      const parsed = UpdateRoundRequestSchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+      const userId = request.user!._id;
+      const data = parsed.data;
+
+      const set: Record<string, unknown> = {};
+      const unset: Record<string, ''> = {};
+
+      if (data.name !== undefined) set['rounds.$[r].name'] = data.name;
+      if (data.outcome !== undefined) set['rounds.$[r].outcome'] = data.outcome;
+      if (data.questions !== undefined) set['rounds.$[r].questions'] = data.questions;
+
+      // Narrow union keeps the loop honest — adding a non-nullable key here
+      // becomes a compile error, not a silent $unset.
+      type NullableRoundKey =
+        | 'scheduledAt'
+        | 'durationMinutes'
+        | 'interviewer'
+        | 'prepNotes'
+        | 'experience';
+      const nullable: NullableRoundKey[] = [
+        'scheduledAt',
+        'durationMinutes',
+        'interviewer',
+        'prepNotes',
+        'experience',
+      ];
+      for (const key of nullable) {
+        const v = data[key];
+        if (v === undefined) continue;
+        if (v === null) unset[`rounds.$[r].${key}`] = '';
+        else set[`rounds.$[r].${key}`] = v;
+      }
+
+      const update: Record<string, unknown> = {};
+      if (Object.keys(set).length > 0) update.$set = set;
+      if (Object.keys(unset).length > 0) update.$unset = unset;
+      if (Object.keys(update).length === 0) {
+        // No-op patch — still validate ownership + round existence.
+        const doc = await JobApplicationModel.findOne({
+          _id: id,
+          userId,
+          'rounds._id': new Types.ObjectId(roundId),
+        }).lean();
+        if (!doc) return reply.code(404).send({ error: 'Not found' });
+        return serializeJobApplication(doc as never);
+      }
+
+      const doc = await JobApplicationModel.findOneAndUpdate(
+        { _id: id, userId, 'rounds._id': new Types.ObjectId(roundId) },
+        update,
+        { new: true, arrayFilters: [{ 'r._id': new Types.ObjectId(roundId) }] }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeJobApplication(doc as never);
+    }
+  );
+
+  // DELETE /api/jobs/:id/rounds/:roundId
+  app.delete(
+    '/api/jobs/:id/rounds/:roundId',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id, roundId } = request.params as { id: string; roundId: string };
+      if (!isValidId(id) || !isValidId(roundId))
+        return reply.code(404).send({ error: 'Not found' });
+      const userId = request.user!._id;
+      const doc = await JobApplicationModel.findOneAndUpdate(
+        { _id: id, userId, 'rounds._id': new Types.ObjectId(roundId) },
+        { $pull: { rounds: { _id: new Types.ObjectId(roundId) } } },
+        { new: true }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeJobApplication(doc as never);
+    }
+  );
 }
