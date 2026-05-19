@@ -57,4 +57,88 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
     });
     return reply.code(201).send(serializeJobApplication(doc.toObject() as never));
   });
+
+  // GET /api/jobs/:id
+  app.get('/api/jobs/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
+    const userId = request.user!._id;
+    const doc = await JobApplicationModel.findOne({ _id: id, userId }).lean();
+    if (!doc) return reply.code(404).send({ error: 'Not found' });
+    return serializeJobApplication(doc as never);
+  });
+
+  // PATCH /api/jobs/:id
+  app.patch('/api/jobs/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
+    const parsed = UpdateJobApplicationRequestSchema.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
+    const userId = request.user!._id;
+    const data = parsed.data;
+
+    const set: Record<string, unknown> = {};
+    const unset: Record<string, ''> = {};
+
+    // Non-nullable scalars: only $set when provided.
+    if (data.company !== undefined) set.company = data.company;
+    if (data.role !== undefined) set.role = data.role;
+    if (data.status !== undefined) set.status = data.status;
+    if (data.tags !== undefined) set.tags = data.tags;
+    if (data.archived !== undefined) set.archived = data.archived;
+
+    // Nullable scalars: null → $unset, value → $set, undefined → skip.
+    const nullable: Array<keyof typeof data> = [
+      'jobUrl',
+      'appliedAt',
+      'resumeUrl',
+      'location',
+      'workMode',
+      'salaryRange',
+      'offerAmount',
+      'notes',
+    ];
+    for (const key of nullable) {
+      const v = data[key];
+      if (v === undefined) continue;
+      if (v === null) unset[key as string] = '';
+      else set[key as string] = v;
+    }
+
+    // links is its own small object — patch by replacement (it has only one
+    // field today). `links.roadmapId: null` clears it.
+    if (data.links !== undefined) {
+      if (data.links.roadmapId === null) unset['links.roadmapId'] = '';
+      else if (data.links.roadmapId !== undefined)
+        set['links.roadmapId'] = data.links.roadmapId;
+    }
+
+    const update: Record<string, unknown> = {};
+    if (Object.keys(set).length > 0) update.$set = set;
+    if (Object.keys(unset).length > 0) update.$unset = unset;
+    if (Object.keys(update).length === 0) {
+      // No-op patch — return the doc to keep the contract.
+      const doc = await JobApplicationModel.findOne({ _id: id, userId }).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeJobApplication(doc as never);
+    }
+
+    const doc = await JobApplicationModel.findOneAndUpdate(
+      { _id: id, userId },
+      update,
+      { new: true }
+    ).lean();
+    if (!doc) return reply.code(404).send({ error: 'Not found' });
+    return serializeJobApplication(doc as never);
+  });
+
+  // DELETE /api/jobs/:id
+  app.delete('/api/jobs/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
+    const userId = request.user!._id;
+    const result = await JobApplicationModel.deleteOne({ _id: id, userId });
+    if (result.deletedCount === 0) return reply.code(404).send({ error: 'Not found' });
+    return { ok: true };
+  });
 }
