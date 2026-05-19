@@ -17,7 +17,9 @@ const STATUS_ORDER: { value: StatusFilter; label: string }[] = [
 ];
 
 interface JobsToolbarProps {
+  activeCount?: number;
   archived: boolean;
+  archivedCount?: number;
   query: string;
   onQueryChange: (v: string) => void;
   statusFilter: StatusFilter;
@@ -26,7 +28,9 @@ interface JobsToolbarProps {
 }
 
 export function JobsToolbar({
+  activeCount,
   archived,
+  archivedCount,
   query,
   onQueryChange,
   statusFilter,
@@ -41,24 +45,34 @@ export function JobsToolbar({
           <Link
             to="/jobs"
             className={cn(
-              'px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors',
+              'inline-flex items-center px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors',
               !archived
                 ? 'text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             )}
           >
             Active
+            {activeCount !== undefined && (
+              <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
+                {activeCount}
+              </span>
+            )}
           </Link>
           <Link
             to="/jobs/archived"
             className={cn(
-              'px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors',
+              'inline-flex items-center px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors',
               archived
                 ? 'text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             )}
           >
             Archive
+            {archivedCount !== undefined && (
+              <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
+                {archivedCount}
+              </span>
+            )}
           </Link>
         </div>
 

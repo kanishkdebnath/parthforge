@@ -9,6 +9,7 @@ import { NewJobDialog } from '@/components/jobs/NewJobDialog';
 
 export default function JobsListPage({ archived = false }: { archived?: boolean } = {}) {
   const { data, isPending } = useJobs({ archived });
+  const { data: counterpart } = useJobs({ archived: !archived });
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [newDialogOpen, setNewDialogOpen] = useState(false);
@@ -67,6 +68,8 @@ export default function JobsListPage({ archived = false }: { archived?: boolean 
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           counts={counts}
+          activeCount={archived ? counterpart?.length : data?.length}
+          archivedCount={archived ? data?.length : counterpart?.length}
         />
 
         {isPending && (
