@@ -4,6 +4,7 @@ import type { JobApplication } from '@pathforge/shared';
 import { JobIdentityHero } from './JobIdentityHero';
 import { StatusBlock } from './StatusBlock';
 import { QuickFactsBlock } from './QuickFactsBlock';
+import { TagsBlock } from './TagsBlock';
 
 interface JobDetailSidebarProps {
   job: JobApplication;
@@ -26,7 +27,9 @@ export function JobDetailSidebar({ job }: JobDetailSidebarProps) {
 
       <QuickFactsBlock job={job} />
 
-      {/* TagsBlock, LinkedRoadmapBlock, ContactsBlock, JobActions are added in tasks 9-12 */}
+      <TagsBlock job={job} />
+
+      {/* LinkedRoadmapBlock, ContactsBlock, JobActions are added in tasks 10-12 */}
     </aside>
   );
 }
