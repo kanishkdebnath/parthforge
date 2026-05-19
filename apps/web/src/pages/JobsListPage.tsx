@@ -5,11 +5,13 @@ import { JobsToolbar, type StatusFilter } from '@/components/jobs/JobsToolbar';
 import { EmptyJobsState } from '@/components/jobs/EmptyJobsState';
 import { NoJobResultsState } from '@/components/jobs/NoJobResultsState';
 import { JobListRow } from '@/components/jobs/JobListRow';
+import { NewJobDialog } from '@/components/jobs/NewJobDialog';
 
 export default function JobsListPage({ archived = false }: { archived?: boolean } = {}) {
   const { data, isPending } = useJobs({ archived });
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [newDialogOpen, setNewDialogOpen] = useState(false);
 
   // Counts always reflect the unfiltered active set so the user can see
   // pipeline shape at a glance — they don't decrease as the user types.
@@ -55,10 +57,7 @@ export default function JobsListPage({ archived = false }: { archived?: boolean 
       <div className="container max-w-6xl py-10 px-6">
         <JobsListHeader
           archived={archived}
-          onNewClick={() => {
-            // NewJobDialog wiring lands in Task 5; placeholder for now.
-            console.log('open new job dialog');
-          }}
+          onNewClick={() => setNewDialogOpen(true)}
         />
 
         <JobsToolbar
@@ -79,7 +78,7 @@ export default function JobsListPage({ archived = false }: { archived?: boolean 
         {showEmpty && (
           <EmptyJobsState
             archived={archived}
-            onNewClick={() => console.log('open new job dialog')}
+            onNewClick={() => setNewDialogOpen(true)}
           />
         )}
 
@@ -98,6 +97,8 @@ export default function JobsListPage({ archived = false }: { archived?: boolean 
           </div>
         )}
       </div>
+
+      <NewJobDialog open={newDialogOpen} onOpenChange={setNewDialogOpen} />
     </main>
   );
 }
