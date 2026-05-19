@@ -357,6 +357,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
       if (Object.keys(set).length > 0) update.$set = set;
       if (Object.keys(unset).length > 0) update.$unset = unset;
       if (Object.keys(update).length === 0) {
+        // No-op patch — still validate ownership + contact existence.
         const doc = await JobApplicationModel.findOne({
           _id: id,
           userId,

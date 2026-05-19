@@ -140,10 +140,10 @@ export type CreateContactInput = z.infer<typeof CreateContactSchema>;
 export const UpdateContactSchema = CreateContactSchema.partial();
 export type UpdateContactInput = z.infer<typeof UpdateContactSchema>;
 
-export const ReorderRoundsSchema = z.object({
-  orderedIds: z.array(z.string()).min(1),
+export const ReorderRoundsRequestSchema = z.object({
+  ids: z.array(z.string()).min(1),
 });
-export type ReorderRoundsInput = z.infer<typeof ReorderRoundsSchema>;
+export type ReorderRoundsInput = z.infer<typeof ReorderRoundsRequestSchema>;
 ```
 
 ### Mongoose model
@@ -178,7 +178,7 @@ All routes live under `/api/jobs`, all require auth, every query filters by `req
 | POST | `/api/jobs/:id/rounds` | `CreateRoundSchema` | Append a round to `rounds` |
 | PATCH | `/api/jobs/:id/rounds/:roundId` | `UpdateRoundSchema` | Update round (name, dates, outcome, prepNotes, questions, experience) |
 | DELETE | `/api/jobs/:id/rounds/:roundId` | — | Remove a round |
-| PUT | `/api/jobs/:id/rounds/order` | `ReorderRoundsSchema` | Reorder rounds (drag-and-drop result) |
+| PUT | `/api/jobs/:id/rounds/order` | `ReorderRoundsRequestSchema` | Reorder rounds (drag-and-drop result) |
 | POST | `/api/jobs/:id/contacts` | `CreateContactSchema` | Append a contact |
 | PATCH | `/api/jobs/:id/contacts/:contactId` | `UpdateContactSchema` | Update contact |
 | DELETE | `/api/jobs/:id/contacts/:contactId` | — | Remove a contact |
