@@ -23,7 +23,7 @@ export function TourPanel() {
         type="button"
         onClick={openPanel}
         aria-label="Resume tour"
-        className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+        className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-slate-900/95 px-4 py-2 text-sm font-medium text-white shadow-2xl shadow-slate-950/40 ring-1 ring-white/10 backdrop-blur-md hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white dark:ring-slate-900/10"
       >
         Resume tour ▸
       </button>
@@ -35,9 +35,9 @@ export function TourPanel() {
   return (
     <aside
       aria-label="Onboarding tour"
-      className="fixed right-0 top-16 z-50 flex h-[calc(100vh-4rem)] w-80 flex-col border-l border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950"
+      className="fixed right-4 top-20 bottom-4 z-50 w-80 flex flex-col rounded-2xl border border-slate-200/70 bg-white/95 shadow-2xl shadow-slate-950/40 ring-1 ring-inset ring-white/5 backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/90"
     >
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+      <div className="flex items-center justify-between border-b border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
         <div>
           <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">Pathfinder tour</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -57,7 +57,13 @@ export function TourPanel() {
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {(['Roadmaps', 'Jobs'] as const).map((group) => (
           <section key={group} className="mb-6 last:mb-0">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span
+                className={`inline-block h-1.5 w-1.5 rounded-full ${
+                  group === 'Roadmaps' ? 'bg-sky-500' : 'bg-emerald-500'
+                }`}
+                aria-hidden="true"
+              />
               {group}
             </h3>
             <ol className="space-y-3">
@@ -105,7 +111,7 @@ export function TourPanel() {
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+      <div className="flex items-center justify-between gap-2 border-t border-slate-200/70 px-4 py-3 dark:border-slate-700/60">
         <Button type="button" variant="ghost" size="sm" onClick={restart}>
           <RotateCcw className="mr-1 h-3 w-3" /> Restart
         </Button>
