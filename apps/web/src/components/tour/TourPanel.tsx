@@ -2,7 +2,15 @@ import { Link } from 'react-router-dom';
 import { Check, Circle, RotateCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTour } from './TourProvider';
-import { TOUR_STEPS, type TourStep } from './tourSteps';
+import { TOUR_STEPS, type TourStep, type TourStepGroup } from './tourSteps';
+
+const GROUPED_STEPS = TOUR_STEPS.reduce<Record<TourStepGroup, TourStep[]>>(
+  (acc, step) => {
+    acc[step.group].push(step);
+    return acc;
+  },
+  { Roadmaps: [], Jobs: [] },
+);
 
 export function TourPanel() {
   const { isDemoUser, open, completedStepIds, openPanel, closePanel, restart, markComplete } = useTour();
@@ -14,6 +22,7 @@ export function TourPanel() {
       <button
         type="button"
         onClick={openPanel}
+        aria-label="Resume tour"
         className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
       >
         Resume tour ▸
@@ -21,16 +30,13 @@ export function TourPanel() {
     );
   }
 
-  const grouped: Record<string, TourStep[]> = {};
-  for (const step of TOUR_STEPS) {
-    const bucket = grouped[step.group] ?? [];
-    bucket.push(step);
-    grouped[step.group] = bucket;
-  }
   const completedCount = TOUR_STEPS.filter((s) => completedStepIds.has(s.id)).length;
 
   return (
-    <aside className="fixed right-0 top-16 z-40 flex h-[calc(100vh-4rem)] w-80 flex-col border-l border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950">
+    <aside
+      aria-label="Onboarding tour"
+      className="fixed right-0 top-16 z-50 flex h-[calc(100vh-4rem)] w-80 flex-col border-l border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950"
+    >
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
         <div>
           <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">Pathfinder tour</div>
@@ -55,22 +61,27 @@ export function TourPanel() {
               {group}
             </h3>
             <ol className="space-y-3">
-              {(grouped[group] ?? []).map((step) => {
+              {GROUPED_STEPS[group].map((step) => {
                 const done = completedStepIds.has(step.id);
                 return (
                   <li key={step.id} className="flex items-start gap-3">
-                    <button
-                      type="button"
-                      onClick={() => markComplete(step.id)}
-                      className="mt-0.5 shrink-0 text-slate-400 hover:text-emerald-600"
-                      aria-label={done ? 'Mark step incomplete' : 'Mark step complete'}
-                    >
-                      {done ? (
-                        <Check className="h-4 w-4 text-emerald-600" />
-                      ) : (
+                    {done ? (
+                      <span
+                        className="mt-0.5 shrink-0 text-emerald-600"
+                        aria-label="Step complete"
+                      >
+                        <Check className="h-4 w-4" />
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => markComplete(step.id)}
+                        className="mt-0.5 shrink-0 text-slate-400 hover:text-emerald-600"
+                        aria-label="Mark step complete"
+                      >
                         <Circle className="h-4 w-4" />
-                      )}
-                    </button>
+                      </button>
+                    )}
                     <div className="min-w-0">
                       <div className={done ? 'text-sm font-medium text-slate-400 line-through dark:text-slate-500' : 'text-sm font-medium text-slate-900 dark:text-slate-100'}>
                         {step.title}
