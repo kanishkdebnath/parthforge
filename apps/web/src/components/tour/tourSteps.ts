@@ -16,6 +16,7 @@ export const TOUR_STEPS: TourStep[] = [
     body: 'Three goals, different states. Click into one.',
     cta: { label: 'Open Roadmaps', to: '/roadmaps' },
   },
+  // CTA label names the canonical demo roadmap from seedDemo.ts — keep in sync.
   {
     id: 'roadmaps-open-active',
     group: 'Roadmaps',
