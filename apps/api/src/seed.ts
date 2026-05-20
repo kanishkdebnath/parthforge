@@ -16,6 +16,12 @@ const DEV_USERS = [
     name: 'Grace Hopper',
     avatarUrl: 'https://api.dicebear.com/9.x/initials/svg?seed=Grace%20Hopper',
   },
+  {
+    email: 'demo@pathforge.dev',
+    name: 'Pathfinder Demo',
+    avatarUrl: 'https://api.dicebear.com/9.x/initials/svg?seed=Pathfinder%20Demo',
+    isDemoUser: true,
+  },
 ];
 
 export async function seedDevUsersIfEmpty(): Promise<void> {
