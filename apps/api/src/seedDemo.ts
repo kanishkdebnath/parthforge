@@ -1,4 +1,6 @@
 import { Types } from 'mongoose';
+import { RoadmapModel } from './models/Roadmap.js';
+import { JobApplicationModel } from './models/JobApplication.js';
 
 export type RoadmapSeed = {
   _id: Types.ObjectId;
@@ -366,4 +368,12 @@ export function getDemoFixtures(userId: Types.ObjectId): {
   const { rust, backend, pathforge } = buildRoadmaps(userId);
   const jobs = buildJobs(userId, backend._id);
   return { roadmaps: [rust, backend, pathforge], jobs };
+}
+
+export async function resetDemoData(userId: Types.ObjectId): Promise<void> {
+  await RoadmapModel.deleteMany({ userId });
+  await JobApplicationModel.deleteMany({ userId });
+  const { roadmaps, jobs } = getDemoFixtures(userId);
+  await RoadmapModel.insertMany(roadmaps);
+  await JobApplicationModel.insertMany(jobs);
 }
