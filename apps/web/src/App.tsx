@@ -14,28 +14,28 @@ import JobDetailPage from '@/pages/JobDetailPage';
 function Protected({ children }: { children: React.ReactNode }) {
   return (
     <RequireAuth>
-      <TourProvider>
-        <Navbar />
-        {children}
-        <TourPanel />
-      </TourProvider>
+      <Navbar />
+      {children}
     </RequireAuth>
   );
 }
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/" element={<Protected><Dashboard /></Protected>} />
-      <Route path="/profile" element={<Protected><Profile /></Protected>} />
-      <Route path="/roadmaps" element={<Protected><RoadmapsListPage /></Protected>} />
-      <Route path="/roadmaps/archived" element={<Protected><RoadmapsListPage archived /></Protected>} />
-      <Route path="/roadmaps/:id" element={<Protected><RoadmapDetailPage /></Protected>} />
-      <Route path="/jobs" element={<Protected><JobsListPage /></Protected>} />
-      <Route path="/jobs/archived" element={<Protected><JobsListPage archived /></Protected>} />
-      <Route path="/jobs/:id" element={<Protected><JobDetailPage /></Protected>} />
-      <Route path="*" element={<Protected><Dashboard /></Protected>} />
-    </Routes>
+    <TourProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Protected><Dashboard /></Protected>} />
+        <Route path="/profile" element={<Protected><Profile /></Protected>} />
+        <Route path="/roadmaps" element={<Protected><RoadmapsListPage /></Protected>} />
+        <Route path="/roadmaps/archived" element={<Protected><RoadmapsListPage archived /></Protected>} />
+        <Route path="/roadmaps/:id" element={<Protected><RoadmapDetailPage /></Protected>} />
+        <Route path="/jobs" element={<Protected><JobsListPage /></Protected>} />
+        <Route path="/jobs/archived" element={<Protected><JobsListPage archived /></Protected>} />
+        <Route path="/jobs/:id" element={<Protected><JobDetailPage /></Protected>} />
+        <Route path="*" element={<Protected><Dashboard /></Protected>} />
+      </Routes>
+      <TourPanel />
+    </TourProvider>
   );
 }
