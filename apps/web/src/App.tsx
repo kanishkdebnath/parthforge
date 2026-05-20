@@ -1,6 +1,8 @@
 import { Route, Routes } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { RequireAuth } from '@/components/RequireAuth';
+import { TourProvider } from '@/components/tour/TourProvider';
+import { TourPanel } from '@/components/tour/TourPanel';
 import Dashboard from '@/pages/Dashboard';
 import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
@@ -12,8 +14,11 @@ import JobDetailPage from '@/pages/JobDetailPage';
 function Protected({ children }: { children: React.ReactNode }) {
   return (
     <RequireAuth>
-      <Navbar />
-      {children}
+      <TourProvider>
+        <Navbar />
+        {children}
+        <TourPanel />
+      </TourProvider>
     </RequireAuth>
   );
 }
