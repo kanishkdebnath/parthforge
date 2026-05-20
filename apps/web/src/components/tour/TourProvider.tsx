@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useMe } from '@/hooks/useAuth';
+import { TOUR_STEPS } from './tourSteps';
 
 type TourContextValue = {
   isDemoUser: boolean;
@@ -34,7 +35,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const closePanel = useCallback(() => setOpen(false), []);
   const restart = useCallback(() => {
     setCompletedStepIds(new Set());
-    setCurrentStepId(null);
+    setCurrentStepId(TOUR_STEPS[0]?.id ?? null);
     setOpen(true);
   }, []);
   const markComplete = useCallback((id: string) => {
