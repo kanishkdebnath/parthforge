@@ -146,6 +146,7 @@ Phased, but the *shape* never changes — only the login step swaps out.
 - Callback upserts a user by `googleId`, sets the same session cookie.
 - `/me`, `/logout`, frontend route guards, navbar — all unchanged.
 - The dev-users endpoint stays available only in development.
+- Note: the demo-reset hook in the login handler (`if user.isDemoUser → resetDemoData`) is part of the login route. When Phase 2 replaces `POST /api/auth/login`, port that hook to the OAuth callback or drop it if demo users won't exist in production.
 
 ### Phase 3 — Email/password (maybe, only if needed)
 - Adds `passwordHash` to the user model, plus `/signup` and password-based `/login`.
@@ -238,3 +239,4 @@ Environment variables live in `.env` (gitignored). `.env.example` documents the 
 - *2026-05-17* — Roadmaps frontend shipped: Editorial Manuscript aesthetic (Fraunces display + slate/amber/lime palette + numbered milestones + drop caps + paper grain); list and detail pages; drag-and-drop reorder for milestones and steps via @dnd-kit; optimistic step toggle and reorder; inline editing throughout; client-side search across title, description, and milestone titles.
 - *2026-05-18* — Roadmaps frontend redesigned to Stripe/Apple aesthetic — Inter throughout (no serif), sky/emerald/red palette (no amber/lime/rose), two-column sidebar detail layout with always-visible Edit/Archive/Delete actions, always-expanded milestone cards with chevron-collapse, hybrid edit pattern (inline for checkbox + title rename, modal for multi-field). Backend and hooks unchanged.
 - *2026-05-18* — LLM import: `POST /api/roadmaps/bulk` accepts a full roadmap tree in one atomic request (validated by new `BulkRoadmapRequestSchema` in `@pathforge/shared` with http/https-only links); new "Import from LLM" header button opens a two-panel dialog that interpolates a prompt template from the user's goal (live preview, copy buttons) and validates pasted/uploaded JSON inline before creating the roadmap and navigating to its detail page.
+- *2026-05-21* — Demo user + onboarding tour: added `isDemoUser` flag on the User schema, a fourth seeded dev user `Pathfinder Demo` whose roadmaps + jobs are wiped and reseeded from a canonical showcase fixture (3 roadmaps, 5 jobs spanning the application funnel) on every login, and a side-panel `TourPanel` that auto-opens for the demo user and walks through 5 Roadmaps steps then 4 Jobs steps. Tour state is in-memory only.
