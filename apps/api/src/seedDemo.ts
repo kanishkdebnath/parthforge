@@ -5,11 +5,13 @@ export type RoadmapSeed = {
   userId: Types.ObjectId;
   title: string;
   description?: string;
+  deadline?: Date;
   archived: boolean;
   milestones: Array<{
     _id: Types.ObjectId;
     title: string;
     description?: string;
+    deadline?: Date;
     steps: Array<{
       _id: Types.ObjectId;
       title: string;
@@ -26,6 +28,7 @@ export type JobSeed = {
   company: string;
   role: string;
   jobUrl?: string;
+  resumeUrl?: string;
   status: 'saved' | 'applied' | 'interviewing' | 'offer' | 'rejected' | 'withdrawn';
   appliedAt?: Date;
   location?: string;
@@ -281,7 +284,6 @@ function buildJobs(
           outcome: 'passed',
           questions: ['Why Linear?', 'Comp expectations'],
           experience: 'Friendly call. Confirmed remote and salary band aligns.',
-          prepNotes: '',
         },
         {
           name: 'System design',
@@ -300,7 +302,6 @@ function buildJobs(
           durationMinutes: 180,
           outcome: 'pending',
           questions: [],
-          experience: '',
           prepNotes: 'Two coding rounds + values interview. Refresh tree traversals.',
         },
       ],
@@ -326,9 +327,9 @@ function buildJobs(
         { name: 'Elena Garcia', role: 'Hiring Manager' },
       ],
       rounds: [
-        { name: 'Recruiter screen', scheduledAt: daysAgo(28), outcome: 'passed', questions: [], experience: '' },
+        { name: 'Recruiter screen', scheduledAt: daysAgo(28), outcome: 'passed', questions: [] },
         { name: 'Technical screen', scheduledAt: daysAgo(22), outcome: 'passed', questions: ['Distributed batch processing question'], experience: 'Tight on time but got to a working solution.' },
-        { name: 'Onsite — coding', scheduledAt: daysAgo(12), outcome: 'passed', questions: [], experience: '' },
+        { name: 'Onsite — coding', scheduledAt: daysAgo(12), outcome: 'passed', questions: [] },
         { name: 'Onsite — system design', scheduledAt: daysAgo(12), outcome: 'passed', questions: ['Design a model-serving gateway'], experience: 'Best interview I have ever done.' },
       ],
       links: {},
@@ -349,7 +350,7 @@ function buildJobs(
         { name: 'Olivia Reed', role: 'Recruiter', email: 'olivia@figma.com' },
       ],
       rounds: [
-        { name: 'Technical screen', scheduledAt: daysAgo(38), outcome: 'passed', questions: [], experience: '' },
+        { name: 'Technical screen', scheduledAt: daysAgo(38), outcome: 'passed', questions: [] },
         { name: 'Onsite', scheduledAt: daysAgo(25), outcome: 'failed', questions: ['Implement a canvas hit-test'], experience: 'Stalled on the hit-test optimization. Knew enough to brute-force, not enough to spatially partition under pressure.' },
       ],
       links: {},
