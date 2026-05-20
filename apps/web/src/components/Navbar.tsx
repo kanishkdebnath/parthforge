@@ -39,10 +39,10 @@ export function Navbar() {
             Pathforge
           </Link>
           <nav className="flex items-center gap-5 text-sm text-slate-600 dark:text-slate-400">
-            <Link to="/roadmaps" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+            <Link to="/roadmaps" data-tour="nav-roadmaps" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
               Roadmaps
             </Link>
-            <Link to="/jobs" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+            <Link to="/jobs" data-tour="nav-jobs" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
               Jobs
             </Link>
           </nav>

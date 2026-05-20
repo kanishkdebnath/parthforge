@@ -6,6 +6,8 @@ export type TourStep = {
   title: string;
   body: string;
   cta?: { label: string; to: string };
+  target?: string;        // CSS selector — callout anchors near this element
+  nextOnPath?: string;    // auto-complete when location.pathname matches
 };
 
 export const TOUR_STEPS: TourStep[] = [
@@ -15,6 +17,8 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'Browse your roadmaps',
     body: 'Three goals, different states. Click into one.',
     cta: { label: 'Open Roadmaps', to: '/roadmaps' },
+    target: '[data-tour="nav-roadmaps"]',
+    nextOnPath: '/roadmaps',
   },
   // CTA label names the canonical demo roadmap from seedDemo.ts — keep in sync.
   {
@@ -23,6 +27,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'Open the in-progress one',
     body: 'Watch how milestones stack into steps.',
     cta: { label: 'Open "Land a senior backend role"', to: '/roadmaps' },
+    nextOnPath: '/roadmaps',
   },
   {
     id: 'roadmaps-toggle-step',
@@ -42,6 +47,8 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'Import from an LLM',
     body: 'The fastest way to build one — paste a prompt, paste JSON, done.',
     cta: { label: 'Try LLM import', to: '/roadmaps' },
+    target: '[data-tour="roadmaps-import-button"]',
+    nextOnPath: '/roadmaps',
   },
   {
     id: 'jobs-browse',
@@ -49,6 +56,8 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'Track your applications',
     body: 'Five jobs across the funnel. Counts on the Active / Archive toggle.',
     cta: { label: 'Open Jobs', to: '/jobs' },
+    target: '[data-tour="nav-jobs"]',
+    nextOnPath: '/jobs',
   },
   {
     id: 'jobs-open-interview',
@@ -56,6 +65,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'Open the active interview',
     body: 'The Linear job — notice it is linked to a roadmap.',
     cta: { label: 'Open Linear application', to: '/jobs' },
+    nextOnPath: '/jobs',
   },
   {
     id: 'jobs-add-round',

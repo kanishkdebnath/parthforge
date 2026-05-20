@@ -3,6 +3,7 @@ import { Navbar } from '@/components/Navbar';
 import { RequireAuth } from '@/components/RequireAuth';
 import { TourProvider } from '@/components/tour/TourProvider';
 import { TourPanel } from '@/components/tour/TourPanel';
+import { TourCallout } from '@/components/tour/TourCallout';
 import Dashboard from '@/pages/Dashboard';
 import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="*" element={<Protected><Dashboard /></Protected>} />
       </Routes>
       <TourPanel />
+      <TourCallout />
     </TourProvider>
   );
 }
