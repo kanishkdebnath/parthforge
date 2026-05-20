@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { LoginRequestSchema } from '@pathforge/shared';
 import { UserModel } from '../models/User.js';
 import { SESSION_COOKIE } from '../plugins/auth.js';
+import { resetDemoData } from '../seedDemo.js';
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/auth/dev-users', async (_request, reply) => {
@@ -25,6 +26,17 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const user = await UserModel.findById(parsed.data.userId).lean();
     if (!user) {
       return reply.code(400).send({ error: 'Unknown user' });
+    }
+    if (user.isDemoUser) {
+      try {
+        await resetDemoData(user._id);
+      } catch (err) {
+        request.log.error(
+          { err, userId: String(user._id) },
+          'demo-reset-failed'
+        );
+        // fail-open: continue with login so the demo user isn't locked out
+      }
     }
     reply.setCookie(SESSION_COOKIE, String(user._id), {
       signed: true,
