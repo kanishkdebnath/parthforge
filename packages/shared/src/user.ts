@@ -26,6 +26,7 @@ export const DevUserSchema = UserSchema.pick({
   email: true,
   name: true,
   avatarUrl: true,
+  isDemoUser: true,
 });
 
 export type DevUser = z.infer<typeof DevUserSchema>;

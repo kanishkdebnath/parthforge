@@ -15,6 +15,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       email: u.email,
       name: u.name,
       avatarUrl: u.avatarUrl ?? undefined,
+      isDemoUser: u.isDemoUser ?? false,
     }));
   });
 
