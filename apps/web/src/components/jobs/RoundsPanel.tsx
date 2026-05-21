@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { RoundCard } from './RoundCard';
 import { RoundFormDialog } from './RoundFormDialog';
 import { useReorderRounds } from '@/hooks/useJobs';
+import { useTour } from '@/components/tour/TourProvider';
 
 interface RoundsPanelProps {
   job: JobApplication;
@@ -29,6 +30,7 @@ export function RoundsPanel({ job }: RoundsPanelProps) {
   const [addOpen, setAddOpen] = useState(false);
   const total = job.rounds.length;
   const done = job.rounds.filter((r) => r.outcome === 'passed').length;
+  const { markComplete } = useTour();
 
   const reorder = useReorderRounds(job._id);
 
@@ -67,7 +69,10 @@ export function RoundsPanel({ job }: RoundsPanelProps) {
           variant="ghost"
           size="sm"
           className="text-slate-700 dark:text-slate-300"
-          onClick={() => setAddOpen(true)}
+          onClick={() => {
+            setAddOpen(true);
+            markComplete('jobs-add-round');
+          }}
         >
           <Plus className="h-3.5 w-3.5 mr-1" />
           Add round

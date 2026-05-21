@@ -16,6 +16,7 @@ import {
 import type { Roadmap } from '@pathforge/shared';
 import { MilestoneCard } from './MilestoneCard';
 import { useReorderMilestones } from '@/hooks/useRoadmaps';
+import { useTour } from '@/components/tour/TourProvider';
 
 interface Props {
   roadmap: Roadmap;
@@ -23,6 +24,7 @@ interface Props {
 
 export function MilestoneList({ roadmap }: Props) {
   const reorder = useReorderMilestones(roadmap._id);
+  const { markComplete } = useTour();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -38,6 +40,7 @@ export function MilestoneList({ roadmap }: Props) {
     if (oldIndex < 0 || newIndex < 0) return;
     const next = arrayMove(ids, oldIndex, newIndex);
     reorder.mutate(next);
+    markComplete('roadmaps-reorder');
   };
 
   if (roadmap.milestones.length === 0) return null;

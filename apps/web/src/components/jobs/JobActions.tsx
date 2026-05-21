@@ -5,6 +5,7 @@ import { useArchiveJob } from '@/hooks/useJobs';
 import { EditJobDialog } from './EditJobDialog';
 import { DeleteJobConfirm } from './DeleteJobConfirm';
 import { ExportReportDialog } from './ExportReportDialog';
+import { useTour } from '@/components/tour/TourProvider';
 
 interface JobActionsProps {
   job: JobApplication;
@@ -15,6 +16,7 @@ export function JobActions({ job }: JobActionsProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const { markComplete } = useTour();
 
   return (
     <div className="space-y-1 pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -28,7 +30,10 @@ export function JobActions({ job }: JobActionsProps) {
       </button>
       <button
         type="button"
-        onClick={() => setExportOpen(true)}
+        onClick={() => {
+          setExportOpen(true);
+          markComplete('jobs-export-report');
+        }}
         className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
       >
         <FileText className="h-3.5 w-3.5" />

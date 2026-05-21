@@ -1,13 +1,19 @@
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useJob } from '@/hooks/useJobs';
 import { JobDetailSidebar } from '@/components/jobs/JobDetailSidebar';
 import { JobNotesPanel } from '@/components/jobs/JobNotesPanel';
 import { RoundsPanel } from '@/components/jobs/RoundsPanel';
 import { NotFoundPanel } from '@/components/NotFoundPanel';
+import { useTour } from '@/components/tour/TourProvider';
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data, isPending } = useJob(id);
+  const { markComplete } = useTour();
+  useEffect(() => {
+    if (data) markComplete('jobs-open-interview');
+  }, [data, markComplete]);
 
   if (isPending) {
     return (

@@ -27,7 +27,6 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'Open the in-progress one',
     body: 'Watch how milestones stack into steps.',
     cta: { label: 'Open "Land a senior backend role"', to: '/roadmaps' },
-    nextOnPath: '/roadmaps',
   },
   {
     id: 'roadmaps-toggle-step',
@@ -48,7 +47,6 @@ export const TOUR_STEPS: TourStep[] = [
     body: 'The fastest way to build one — paste a prompt, paste JSON, done.',
     cta: { label: 'Try LLM import', to: '/roadmaps' },
     target: '[data-tour="roadmaps-import-button"]',
-    nextOnPath: '/roadmaps',
   },
   {
     id: 'jobs-browse',
@@ -65,7 +63,6 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'Open the active interview',
     body: 'The Linear job — notice it is linked to a roadmap.',
     cta: { label: 'Open Linear application', to: '/jobs' },
-    nextOnPath: '/jobs',
   },
   {
     id: 'jobs-add-round',

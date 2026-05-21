@@ -14,6 +14,7 @@ import { InlineEditableTitle } from '@/components/InlineEditable';
 import { LinkChips } from './LinkChips';
 import { EditStepLinksDialog } from './EditStepLinksDialog';
 import { useUpdateStep, useDeleteStep } from '@/hooks/useRoadmaps';
+import { useTour } from '@/components/tour/TourProvider';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -29,6 +30,7 @@ export function StepRow({ roadmapId, milestoneId, step }: Props) {
   const updateStep = useUpdateStep(roadmapId, milestoneId);
   const deleteStep = useDeleteStep(roadmapId, milestoneId, step._id);
   const [linksOpen, setLinksOpen] = useState(false);
+  const { markComplete } = useTour();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -56,9 +58,10 @@ export function StepRow({ roadmapId, milestoneId, step }: Props) {
         </button>
         <Checkbox
           checked={step.completed}
-          onCheckedChange={(c) =>
-            updateStep.mutate({ stepId: step._id, patch: { completed: c === true } })
-          }
+          onCheckedChange={(c) => {
+            updateStep.mutate({ stepId: step._id, patch: { completed: c === true } });
+            markComplete('roadmaps-toggle-step');
+          }}
           className={cn(
             'mt-1 transition-colors',
             step.completed && 'bg-brand border-brand data-[state=checked]:bg-brand'
