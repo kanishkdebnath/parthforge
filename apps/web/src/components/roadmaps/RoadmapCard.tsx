@@ -52,6 +52,7 @@ export function RoadmapCard({ roadmap }: Props) {
   return (
     <Link
       to={`/roadmaps/${roadmap._id}`}
+      data-tour="roadmap-card"
       className="group block bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
     >
       <div className="flex items-start gap-4">

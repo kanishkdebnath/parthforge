@@ -57,6 +57,7 @@ export function StepRow({ roadmapId, milestoneId, step }: Props) {
           <GripVertical className="h-3.5 w-3.5" />
         </button>
         <Checkbox
+          data-tour="step-checkbox"
           checked={step.completed}
           onCheckedChange={(c) => {
             updateStep.mutate({ stepId: step._id, patch: { completed: c === true } });

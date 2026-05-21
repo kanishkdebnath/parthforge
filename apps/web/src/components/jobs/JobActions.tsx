@@ -30,6 +30,7 @@ export function JobActions({ job }: JobActionsProps) {
       </button>
       <button
         type="button"
+        data-tour="job-export-report"
         onClick={() => {
           setExportOpen(true);
           markComplete('jobs-export-report');

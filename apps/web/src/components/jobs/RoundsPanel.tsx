@@ -68,6 +68,7 @@ export function RoundsPanel({ job }: RoundsPanelProps) {
         <Button
           variant="ghost"
           size="sm"
+          data-tour="job-add-round"
           className="text-slate-700 dark:text-slate-300"
           onClick={() => {
             setAddOpen(true);
