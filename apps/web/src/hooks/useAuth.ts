@@ -1,9 +1,30 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { DevUser, User } from '@pathforge/shared';
+import { AxiosError } from 'axios';
+import { toast } from 'sonner';
+import type { DevUser, UpdateMeRequest, User } from '@pathforge/shared';
 import { api } from '@/lib/api';
 import { todayLocal } from '@/lib/journalDate';
 
 const ME_KEY = ['auth', 'me'] as const;
+
+interface ServerErrorBody {
+  error?: string;
+  details?: Array<{ path: string; message: string }>;
+}
+
+function toastApiError(fallback: string, err: unknown): void {
+  let msg = fallback;
+  if (err instanceof AxiosError) {
+    const data = err.response?.data as ServerErrorBody | undefined;
+    if (data?.details && data.details.length > 0) {
+      const first = data.details[0]!;
+      msg = first.path ? `${first.path}: ${first.message}` : first.message;
+    } else if (data?.error) {
+      msg = data.error;
+    }
+  }
+  toast.error(msg);
+}
 
 export function useMe() {
   return useQuery({
@@ -53,6 +74,22 @@ export function useLogout() {
     onSuccess: () => {
       qc.setQueryData(ME_KEY, null);
       qc.invalidateQueries({ queryKey: ME_KEY });
+    },
+  });
+}
+
+export function useUpdateMe() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: UpdateMeRequest): Promise<User> => {
+      const res = await api.patch<User>('/auth/me', body);
+      return res.data;
+    },
+    onSuccess: (fresh) => {
+      qc.setQueryData(ME_KEY, fresh);
+    },
+    onError: (err) => {
+      toastApiError('Could not save profile', err);
     },
   });
 }

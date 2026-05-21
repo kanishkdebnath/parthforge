@@ -7,6 +7,10 @@ export const UserSchema = z.object({
   avatarUrl: z.string().url().optional(),
   googleId: z.string().optional(),
   isDemoUser: z.boolean().optional(),
+  // IANA timezone name (e.g., "America/Los_Angeles"). Optional — when set,
+  // becomes the source of truth for resolving the user's "today" in any
+  // server-side date logic.
+  timezone: z.string().min(1).max(80).optional(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -38,3 +42,11 @@ export const DevUserSchema = UserSchema.pick({
 });
 
 export type DevUser = z.infer<typeof DevUserSchema>;
+
+// Profile self-update. Null clears a field; undefined leaves it alone.
+// The IANA name's semantic validity is checked on the server via
+// Intl.DateTimeFormat — this schema only enforces shape.
+export const UpdateMeRequestSchema = z.object({
+  timezone: z.string().min(1).max(80).nullable().optional(),
+});
+export type UpdateMeRequest = z.infer<typeof UpdateMeRequestSchema>;
