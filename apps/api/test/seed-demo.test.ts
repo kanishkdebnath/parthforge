@@ -68,3 +68,87 @@ describe('getDemoFixtures', () => {
     }
   });
 });
+
+describe('getDemoFixtures — journal', () => {
+  const { roadmaps, jobs, journalDays } = getDemoFixtures(userId);
+
+  it('returns 10 to 12 journal days (one intentionally skipped)', () => {
+    expect(journalDays.length).toBeGreaterThanOrEqual(10);
+    expect(journalDays.length).toBeLessThanOrEqual(12);
+  });
+
+  it('stamps userId on every journal day', () => {
+    for (const d of journalDays) expect(String(d.userId)).toBe(String(userId));
+  });
+
+  it('uses YYYY-MM-DD date strings, all unique', () => {
+    const dates = journalDays.map((d) => d.date);
+    for (const date of dates) expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(new Set(dates).size).toBe(dates.length);
+  });
+
+  it('every mood scale is in 1..5', () => {
+    for (const d of journalDays) {
+      expect(d.mood.scale).toBeGreaterThanOrEqual(1);
+      expect(d.mood.scale).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it('exercises mood variance (at least one low and one high)', () => {
+    const scales = journalDays.map((d) => d.mood.scale);
+    expect(Math.min(...scales)).toBeLessThanOrEqual(2);
+    expect(Math.max(...scales)).toBeGreaterThanOrEqual(5);
+  });
+
+  it('includes at least one important event', () => {
+    const anyImportant = journalDays.some((d) =>
+      d.events.some((e) => e.important)
+    );
+    expect(anyImportant).toBe(true);
+  });
+
+  it('references only roadmaps and jobs owned by this demo user', () => {
+    const ownRoadmapIds = new Set(roadmaps.map((r) => String(r._id)));
+    const ownJobIds = new Set(jobs.map((j) => String((j as { _id?: unknown })._id ?? '')).filter(Boolean));
+    for (const d of journalDays) {
+      for (const ref of d.references) {
+        if (ref.type === 'roadmap') {
+          expect(ownRoadmapIds.has(String(ref.roadmapId))).toBe(true);
+        } else if (ref.type === 'milestone') {
+          expect(ownRoadmapIds.has(String(ref.roadmapId))).toBe(true);
+        } else if (ref.type === 'job') {
+          // Jobs only have _id pre-stamped when the seed needs to reference them.
+          if (ownJobIds.size > 0) {
+            expect(ownJobIds.has(String(ref.jobId))).toBe(true);
+          }
+        }
+      }
+    }
+  });
+});
+
+describe('getDemoFixtures — anchor date', () => {
+  it('anchors day 0 to the provided client date', () => {
+    const { journalDays } = getDemoFixtures(userId, '2026-05-22');
+    const dates = journalDays.map((d) => d.date).sort().reverse();
+    // Day 0 is the most recent — should match the anchor exactly.
+    expect(dates[0]).toBe('2026-05-22');
+  });
+
+  it('skips day -2 relative to the anchor (empty calendar state)', () => {
+    const { journalDays } = getDemoFixtures(userId, '2026-05-22');
+    const dates = new Set(journalDays.map((d) => d.date));
+    expect(dates.has('2026-05-20')).toBe(false); // day -2 skipped
+    expect(dates.has('2026-05-21')).toBe(true);  // day -1 present
+    expect(dates.has('2026-05-19')).toBe(true);  // day -3 present
+  });
+
+  it('handles month boundaries when anchor is near month-start', () => {
+    const { journalDays } = getDemoFixtures(userId, '2026-03-02');
+    const dates = new Set(journalDays.map((d) => d.date));
+    // Day -3 from 2026-03-02 = 2026-02-27
+    expect(dates.has('2026-02-27')).toBe(true);
+    // Day -11 = 2026-02-19
+    expect(dates.has('2026-02-19')).toBe(true);
+  });
+});

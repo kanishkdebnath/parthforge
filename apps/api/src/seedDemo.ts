@@ -1,6 +1,8 @@
 import { Types } from 'mongoose';
 import { RoadmapModel } from './models/Roadmap.js';
 import { JobApplicationModel } from './models/JobApplication.js';
+import { JournalDayModel } from './models/JournalDay.js';
+import type { MoodTag } from '@pathforge/shared';
 
 export type RoadmapSeed = {
   _id: Types.ObjectId;
@@ -23,6 +25,26 @@ export type RoadmapSeed = {
     }>;
     completedAt?: Date;
   }>;
+};
+
+export type JournalDaySeed = {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  date: string;
+  mood: { scale: number; tags: MoodTag[] };
+  summary?: string;
+  events: Array<{
+    _id: Types.ObjectId;
+    text: string;
+    important: boolean;
+    time?: string;
+  }>;
+  links: Array<{ url: string; label?: string }>;
+  references: Array<
+    | { type: 'roadmap'; roadmapId: Types.ObjectId }
+    | { type: 'milestone'; roadmapId: Types.ObjectId; milestoneId: Types.ObjectId }
+    | { type: 'job'; jobId: Types.ObjectId }
+  >;
 };
 
 export type JobSeed = {
@@ -65,6 +87,24 @@ const daysFromNow = (n: number): Date => {
   d.setDate(d.getDate() + n);
   return d;
 };
+
+/** YYYY-MM-DD for n days before the given anchor date.
+ * Anchor is a YYYY-MM-DD string interpreted as that calendar day —
+ * arithmetic is done via UTC math but the input/output are timezone-less
+ * day labels, so passing in the user's local "today" gives back days in
+ * the user's local calendar. */
+function dateOffset(anchor: string, n: number): string {
+  const [y, m, d] = anchor.split('-').map(Number) as [number, number, number];
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - n);
+  return dt.toISOString().slice(0, 10);
+}
+
+/** UTC YYYY-MM-DD for "now", used as the fallback anchor when the client
+ * didn't send its local date on login. */
+function utcToday(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 const oid = () => new Types.ObjectId();
 
@@ -361,19 +401,178 @@ function buildJobs(
   ];
 }
 
-export function getDemoFixtures(userId: Types.ObjectId): {
+function buildJournalDays(
+  userId: Types.ObjectId,
+  rust: RoadmapSeed,
+  backend: RoadmapSeed,
+  linearJob: { _id: Types.ObjectId },
+  anchorDate: string
+): JournalDaySeed[] {
+  const day = (
+    n: number,
+    init: Omit<JournalDaySeed, '_id' | 'userId' | 'date'>
+  ): JournalDaySeed => ({
+    _id: oid(),
+    userId,
+    date: dateOffset(anchorDate, n),
+    ...init,
+  });
+
+  // Day -2 is intentionally absent (shows the empty calendar state).
+  return [
+    day(0, {
+      mood: { scale: 4, tags: ['focused', 'grateful'] },
+      summary: 'Pushed the tour fix.',
+      events: [
+        { _id: oid(), text: 'Shipped cascade-completion fix', important: true, time: '10am' },
+        { _id: oid(), text: 'Wired markComplete handlers across pages', important: false },
+        { _id: oid(), text: 'Closed out the demo-user-tour branch', important: false, time: '3pm' },
+      ],
+      links: [{ url: 'https://github.com/example/pathforge/pull/42', label: 'PR #42' }],
+      references: [{ type: 'roadmap', roadmapId: rust._id }],
+    }),
+    day(1, {
+      mood: { scale: 3, tags: ['restless'] },
+      summary: 'Stuck on routing for too long.',
+      events: [
+        { _id: oid(), text: 'Half hour debugging route guards', important: false },
+        { _id: oid(), text: 'Walked away to reset', important: false, time: '4pm' },
+      ],
+      links: [],
+      references: [],
+    }),
+    // Day -2 intentionally skipped
+    day(3, {
+      mood: { scale: 4, tags: ['focused'] },
+      summary: 'Two clean milestones.',
+      events: [
+        { _id: oid(), text: 'Finished system design notes', important: false },
+        { _id: oid(), text: 'Mock interview with peer', important: false, time: '6pm' },
+      ],
+      links: [{ url: 'https://dataintensive.net', label: 'DDIA' }],
+      references: [
+        {
+          type: 'milestone',
+          roadmapId: backend._id,
+          milestoneId: backend.milestones[0]!._id,
+        },
+      ],
+    }),
+    day(4, {
+      mood: { scale: 2, tags: ['tired', 'low'] },
+      summary: 'Rough day; called it early.',
+      events: [{ _id: oid(), text: 'Headache through lunch', important: false }],
+      links: [],
+      references: [{ type: 'job', jobId: linearJob._id }],
+    }),
+    day(5, {
+      mood: { scale: 5, tags: ['excited', 'grateful'] },
+      summary: 'Best interview I have done.',
+      events: [
+        { _id: oid(), text: 'Onsite system design — landed it', important: true, time: '11am' },
+        { _id: oid(), text: 'Coding round — clean solution', important: true },
+        { _id: oid(), text: 'Recruiter said "looking forward to the next"', important: false },
+        { _id: oid(), text: 'Celebrated with tea', important: false, time: '5pm' },
+      ],
+      links: [
+        { url: 'https://example.com/system-design-notes', label: 'Prep notes' },
+        { url: 'https://github.com/example/scratch', label: 'Scratch repo' },
+      ],
+      references: [{ type: 'roadmap', roadmapId: backend._id }],
+    }),
+    day(6, {
+      mood: { scale: 3, tags: ['calm'] },
+      summary: 'Quiet recovery day.',
+      events: [{ _id: oid(), text: 'Read for an hour', important: false }],
+      links: [],
+      references: [],
+    }),
+    day(7, {
+      mood: { scale: 4, tags: ['focused'] },
+      summary: 'Steady progress on Rust CLI.',
+      events: [
+        { _id: oid(), text: 'Added subcommand parser', important: false, time: '11am' },
+        { _id: oid(), text: 'Wrote tests for arg parsing', important: false },
+      ],
+      links: [{ url: 'https://docs.rs/clap', label: 'clap docs' }],
+      references: [
+        {
+          type: 'milestone',
+          roadmapId: rust._id,
+          milestoneId: rust.milestones[1]!._id,
+        },
+      ],
+    }),
+    day(8, {
+      mood: { scale: 3, tags: [] },
+      summary: 'Recharged.',
+      events: [],
+      links: [],
+      references: [],
+    }),
+    day(9, {
+      mood: { scale: 4, tags: ['grateful'] },
+      summary: 'Coffee with an old colleague.',
+      events: [],
+      links: [],
+      references: [],
+    }),
+    day(10, {
+      mood: { scale: 3, tags: [] },
+      summary: 'Quiet day.',
+      events: [],
+      links: [],
+      references: [],
+    }),
+    day(11, {
+      mood: { scale: 4, tags: ['calm'] },
+      summary: 'Reviewed last quarter notes.',
+      events: [],
+      links: [],
+      references: [],
+    }),
+  ];
+}
+
+export function getDemoFixtures(
+  userId: Types.ObjectId,
+  anchorDate: string = utcToday()
+): {
   roadmaps: RoadmapSeed[];
-  jobs: JobSeed[];
+  jobs: (JobSeed & { _id?: Types.ObjectId })[];
+  journalDays: JournalDaySeed[];
 } {
   const { rust, backend, pathforge } = buildRoadmaps(userId);
   const jobs = buildJobs(userId, backend._id);
-  return { roadmaps: [rust, backend, pathforge], jobs };
+
+  // Stamp _id on the Linear job so the journal "Day -4" ref can point at it.
+  const linearJob = jobs.find((j) => j.company === 'Linear');
+  if (!linearJob) {
+    throw new Error('Demo fixture invariant: Linear job missing');
+  }
+  const linearId = oid();
+  (linearJob as JobSeed & { _id: Types.ObjectId })._id = linearId;
+
+  const journalDays = buildJournalDays(
+    userId,
+    rust,
+    backend,
+    { _id: linearId },
+    anchorDate
+  );
+
+  return { roadmaps: [rust, backend, pathforge], jobs, journalDays };
 }
 
-export async function resetDemoData(userId: Types.ObjectId): Promise<void> {
+export async function resetDemoData(
+  userId: Types.ObjectId,
+  anchorDate?: string
+): Promise<void> {
   await RoadmapModel.deleteMany({ userId });
   await JobApplicationModel.deleteMany({ userId });
-  const { roadmaps, jobs } = getDemoFixtures(userId);
+  await JournalDayModel.deleteMany({ userId });
+  const { roadmaps, jobs, journalDays } = getDemoFixtures(userId, anchorDate);
   await RoadmapModel.insertMany(roadmaps);
   await JobApplicationModel.insertMany(jobs);
+  await JournalDayModel.insertMany(journalDays);
 }

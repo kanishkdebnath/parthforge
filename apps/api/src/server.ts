@@ -7,6 +7,7 @@ import authPlugin from './plugins/auth.js';
 import { authRoutes } from './routes/auth.js';
 import { roadmapsRoutes } from './routes/roadmaps.js';
 import { jobsRoutes } from './routes/jobs.js';
+import { journalRoutes } from './routes/journal.js';
 
 export interface BuildOptions {
   skipDb?: boolean;
@@ -45,6 +46,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
   await app.register(authRoutes);
   await app.register(roadmapsRoutes);
   await app.register(jobsRoutes);
+  await app.register(journalRoutes);
   return app;
 }
 
