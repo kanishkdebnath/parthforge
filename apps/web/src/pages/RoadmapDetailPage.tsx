@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useRoadmap } from '@/hooks/useRoadmaps';
 import { NotFoundPanel } from '@/components/NotFoundPanel';
 import { RoadmapSidebar } from '@/components/roadmaps/RoadmapSidebar';
 import { MilestoneList } from '@/components/roadmaps/MilestoneList';
 import { AddMilestoneInline } from '@/components/roadmaps/AddMilestoneInline';
+import { useTour } from '@/components/tour/TourProvider';
 
 export default function RoadmapDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +18,10 @@ export default function RoadmapDetailPage() {
     );
   }
   const { data, isPending } = useRoadmap(id);
+  const { markComplete } = useTour();
+  useEffect(() => {
+    if (data) markComplete('roadmaps-open-active');
+  }, [data, markComplete]);
 
   if (isPending) {
     return (

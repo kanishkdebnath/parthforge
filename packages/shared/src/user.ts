@@ -6,6 +6,7 @@ export const UserSchema = z.object({
   name: z.string().min(1),
   avatarUrl: z.string().url().optional(),
   googleId: z.string().optional(),
+  isDemoUser: z.boolean().optional(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -25,6 +26,7 @@ export const DevUserSchema = UserSchema.pick({
   email: true,
   name: true,
   avatarUrl: true,
+  isDemoUser: true,
 });
 
 export type DevUser = z.infer<typeof DevUserSchema>;

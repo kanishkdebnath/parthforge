@@ -8,6 +8,7 @@ import { EmptyRoadmapsState } from '@/components/roadmaps/EmptyRoadmapsState';
 import { NoResultsState } from '@/components/roadmaps/NoResultsState';
 import { NewRoadmapDialog } from '@/components/roadmaps/NewRoadmapDialog';
 import { ImportRoadmapDialog } from '@/components/roadmaps/ImportRoadmapDialog';
+import { useTour } from '@/components/tour/TourProvider';
 
 interface Props {
   archived?: boolean;
@@ -18,6 +19,7 @@ export default function RoadmapsListPage({ archived = false }: Props) {
   const [query, setQuery] = useState('');
   const [newDialogOpen, setNewDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const { markComplete } = useTour();
 
   const filtered = useMemo<Roadmap[]>(() => {
     if (!data) return [];
@@ -37,7 +39,10 @@ export default function RoadmapsListPage({ archived = false }: Props) {
         <ListPageHeader
           archived={archived}
           onNewClick={() => setNewDialogOpen(true)}
-          onImportClick={() => setImportDialogOpen(true)}
+          onImportClick={() => {
+            setImportDialogOpen(true);
+            markComplete('roadmaps-import');
+          }}
         />
         <RoadmapsToolbar query={query} onQueryChange={setQuery} archived={archived} />
 

@@ -30,6 +30,7 @@ export function JobListRow({ job }: JobListRowProps) {
   return (
     <Link
       to={`/jobs/${job._id}`}
+      data-tour="job-list-row"
       className="group block hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
     >
       <div className="grid grid-cols-[56px_1fr_220px] gap-4 px-5 py-4 items-center">

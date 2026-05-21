@@ -6,6 +6,7 @@ const userSchema = new Schema(
     name: { type: String, required: true },
     avatarUrl: { type: String },
     googleId: { type: String, index: true, sparse: true },
+    isDemoUser: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

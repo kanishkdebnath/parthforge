@@ -10,11 +10,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useMe, useLogout } from '@/hooks/useAuth';
+import { DemoBadge } from '@/components/tour/DemoBadge';
+import { useTour } from '@/components/tour/TourProvider';
 
 export function Navbar() {
   const navigate = useNavigate();
   const { data: me } = useMe();
   const logout = useLogout();
+  const { isDemoUser, restart } = useTour();
 
   if (!me) return null;
 
@@ -36,10 +39,10 @@ export function Navbar() {
             Pathforge
           </Link>
           <nav className="flex items-center gap-5 text-sm text-slate-600 dark:text-slate-400">
-            <Link to="/roadmaps" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+            <Link to="/roadmaps" data-tour="nav-roadmaps" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
               Roadmaps
             </Link>
-            <Link to="/jobs" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+            <Link to="/jobs" data-tour="nav-jobs" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
               Jobs
             </Link>
           </nav>
@@ -53,10 +56,19 @@ export function Navbar() {
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <span className="text-sm text-slate-700 dark:text-slate-300">{me.name}</span>
+              {isDemoUser && <DemoBadge />}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{me.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {isDemoUser && (
+                <>
+                  <DropdownMenuItem onSelect={() => restart()}>
+                    Restart tour
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem onSelect={() => navigate('/profile')}>
                 Profile
               </DropdownMenuItem>

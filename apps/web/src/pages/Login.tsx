@@ -5,9 +5,11 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DemoBadge } from '@/components/tour/DemoBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useDevUsers, useLogin, useMe } from '@/hooks/useAuth';
 
@@ -43,11 +45,30 @@ export default function Login() {
               <SelectValue placeholder={isPending ? 'Loading…' : 'Choose a user'} />
             </SelectTrigger>
             <SelectContent>
-              {devUsers?.map((u) => (
+              {devUsers?.filter((u) => !u.isDemoUser).map((u) => (
                 <SelectItem key={u._id} value={u._id}>
                   {u.name} — {u.email}
                 </SelectItem>
               ))}
+              {devUsers?.some((u) => u.isDemoUser) && (
+                <>
+                  <SelectSeparator />
+                  {devUsers
+                    ?.filter((u) => u.isDemoUser)
+                    .map((u) => (
+                      <SelectItem
+                        key={u._id}
+                        value={u._id}
+                        className="data-[highlighted]:bg-amber-100 dark:data-[highlighted]:bg-amber-900/30"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>{u.name} — {u.email}</span>
+                          <DemoBadge />
+                        </span>
+                      </SelectItem>
+                    ))}
+                </>
+              )}
             </SelectContent>
           </Select>
           <Button

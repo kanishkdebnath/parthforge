@@ -57,6 +57,7 @@ export function MilestoneCard({ roadmapId, milestone }: Props) {
         <button
           {...attributes}
           {...listeners}
+          data-tour="milestone-drag-handle"
           aria-label="Drag to reorder milestone"
           className="cursor-grab text-slate-300 dark:text-slate-600 hover:text-slate-500 transition-colors shrink-0"
         >

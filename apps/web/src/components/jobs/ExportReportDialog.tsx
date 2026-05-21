@@ -49,7 +49,7 @@ export function ExportReportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4 pr-10">
             <div>
               <DialogTitle className="text-xl font-semibold tracking-tight">
                 Export report prompt
