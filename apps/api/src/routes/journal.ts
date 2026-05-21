@@ -30,7 +30,7 @@ const RangeQuerySchema = z
 
 function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({
-    error: 'Invalid request',
+    error: 'Invalid body',
     details: error.issues.map((i) => ({
       path: i.path.join('.'),
       message: i.message,
@@ -103,6 +103,8 @@ export async function journalRoutes(app: FastifyInstance): Promise<void> {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).lean();
 
+    if (!doc) return reply.code(409).send({ error: 'Conflict' });
+
     return serializeJournalDay(doc as never);
   });
 
@@ -113,7 +115,10 @@ export async function journalRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(400).send({ error: 'Invalid date' });
     }
     const userId = request.user!._id;
-    await JournalDayModel.deleteOne({ userId, date });
+    const result = await JournalDayModel.deleteOne({ userId, date });
+    if (result.deletedCount === 0) {
+      return reply.code(404).send({ error: 'Not found' });
+    }
     return reply.code(204).send();
   });
 }
