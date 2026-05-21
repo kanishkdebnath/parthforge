@@ -60,4 +60,23 @@ describe('serializeJournalDay', () => {
     const wire = serializeJournalDay(minimal as never);
     expect(wire.summary).toBeUndefined();
   });
+
+  it('strips stray fields from reference variants', () => {
+    const contaminated = {
+      ...doc,
+      references: [
+        // roadmap variant with a stray milestoneId (could happen if a doc was
+        // mutated without re-validating against the Zod schema).
+        {
+          type: 'roadmap',
+          roadmapId: new Types.ObjectId(),
+          milestoneId: new Types.ObjectId(),
+        },
+      ],
+    };
+    const wire = serializeJournalDay(contaminated as never);
+    const ref = wire.references[0];
+    expect(ref.type).toBe('roadmap');
+    expect('milestoneId' in ref).toBe(false);
+  });
 });

@@ -1,4 +1,5 @@
 import { Schema, model, type InferSchemaType, Types } from 'mongoose';
+import { MOOD_TAGS } from '@pathforge/shared';
 
 const eventSchema = new Schema(
   {
@@ -9,6 +10,10 @@ const eventSchema = new Schema(
   { _id: true }
 );
 
+// Reference variants are validated by Zod (`ReferenceSchema` discriminated
+// union) at the route boundary. Mongoose stores the flat shape and does not
+// enforce that `type=roadmap` excludes `milestoneId`/`jobId`. Any direct
+// model writes (seeds, scripts) must pre-validate against the Zod schema.
 const referenceSchema = new Schema(
   {
     type: {
@@ -31,7 +36,7 @@ const linkSchema = new Schema(
 const moodSchema = new Schema(
   {
     scale: { type: Number, required: true, min: 1, max: 5 },
-    tags: { type: [String], default: [] },
+    tags: { type: [String], enum: [...MOOD_TAGS], default: [] },
   },
   { _id: false }
 );
@@ -56,6 +61,10 @@ const journalDaySchema = new Schema(
 // One day per user per date.
 journalDaySchema.index({ userId: 1, date: -1 }, { unique: true });
 
+// InferSchemaType doesn't surface timestamps even with `timestamps: true`,
+// so declare them explicitly. `_id: string` matches the JobApplicationDoc
+// precedent; the serializer calls String(...) at every ObjectId site to
+// bridge the runtime ObjectId values.
 export type JournalDayDoc = InferSchemaType<typeof journalDaySchema> & {
   _id: string;
   createdAt: Date;

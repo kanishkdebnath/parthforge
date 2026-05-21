@@ -1,5 +1,7 @@
 import type { JournalDay, JournalReference } from '@pathforge/shared';
 import type { JournalDayDoc } from '../models/JournalDay.js';
+import { RoadmapModel } from '../models/Roadmap.js';
+import { JobApplicationModel } from '../models/JobApplication.js';
 
 /**
  * Converts a lean Mongo doc into the wire shape: stringifies every ObjectId
@@ -42,4 +44,35 @@ export function serializeJournalDay(doc: JournalDayDoc): JournalDay {
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
+}
+
+/**
+ * Checks that every reference points to a doc owned by `userId`. Returns
+ * the first invalid reference (so the caller can echo it in the 400 body),
+ * or null if all references are valid.
+ *
+ * Performs one query per reference (sequential) — references are capped at
+ * 10 per day by the Zod schema, so the absolute cost is bounded.
+ */
+export async function validateReferenceOwnership(
+  userId: string,
+  refs: JournalReference[]
+): Promise<JournalReference | null> {
+  for (const ref of refs) {
+    if (ref.type === 'roadmap') {
+      const exists = await RoadmapModel.exists({ _id: ref.roadmapId, userId });
+      if (!exists) return ref;
+    } else if (ref.type === 'milestone') {
+      const exists = await RoadmapModel.exists({
+        _id: ref.roadmapId,
+        userId,
+        'milestones._id': ref.milestoneId,
+      });
+      if (!exists) return ref;
+    } else if (ref.type === 'job') {
+      const exists = await JobApplicationModel.exists({ _id: ref.jobId, userId });
+      if (!exists) return ref;
+    }
+  }
+  return null;
 }
