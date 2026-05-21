@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMe } from '@/hooks/useAuth';
 import { TOUR_STEPS, type TourStep } from './tourSteps';
 
@@ -23,9 +23,12 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
 
   const [open, setOpen] = useState(false);
   const [completedStepIds, setCompletedStepIds] = useState<Set<string>>(() => new Set());
-  const [currentStepId, setCurrentStepId] = useState<string | null>(null);
+  const [currentStepId, setCurrentStepId] = useState<string | null>(TOUR_STEPS[0]?.id ?? null);
   const autoOpenedFor = useRef<string | null>(null);
+  const prevPathRef = useRef<string | null>(null);
+  const prevStepRef = useRef<string | null>(TOUR_STEPS[0]?.id ?? null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isDemoUser || !me) return;
@@ -40,7 +43,8 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     setCompletedStepIds(new Set());
     setCurrentStepId(TOUR_STEPS[0]?.id ?? null);
     setOpen(true);
-  }, []);
+    navigate('/');
+  }, [navigate]);
   const markComplete = useCallback((id: string) => {
     setCompletedStepIds((prev) => {
       if (prev.has(id)) return prev;
@@ -55,13 +59,21 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isDemoUser) return;
-    for (const step of TOUR_STEPS) {
-      if (!completedStepIds.has(step.id) && step.nextOnPath === location.pathname) {
-        markComplete(step.id);
-        break; // only auto-complete one step per route change
-      }
+    const pathChanged = prevPathRef.current !== location.pathname;
+    const stepChanged = prevStepRef.current !== currentStepId;
+    prevPathRef.current = location.pathname;
+    prevStepRef.current = currentStepId;
+    if (!pathChanged) return;
+    // If the current step just advanced in the same tick (e.g. a CTA called
+    // markComplete and navigated), the navigation has already done its job —
+    // do not auto-complete the freshly-current step as well.
+    if (stepChanged) return;
+    if (!currentStepId) return;
+    const step = TOUR_STEPS.find((s) => s.id === currentStepId);
+    if (step?.nextOnPath === location.pathname) {
+      markComplete(currentStepId);
     }
-  }, [isDemoUser, location.pathname, completedStepIds, markComplete]);
+  }, [isDemoUser, location.pathname, currentStepId, markComplete]);
 
   const currentStep = currentStepId ? TOUR_STEPS.find((s) => s.id === currentStepId) ?? null : null;
 
