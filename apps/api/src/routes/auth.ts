@@ -30,7 +30,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
     if (user.isDemoUser) {
       try {
-        await resetDemoData(user._id);
+        await resetDemoData(user._id, parsed.data.clientToday);
       } catch (err) {
         request.log.error(
           { err, userId: String(user._id) },

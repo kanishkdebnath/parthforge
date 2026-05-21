@@ -126,3 +126,29 @@ describe('getDemoFixtures — journal', () => {
     }
   });
 });
+
+describe('getDemoFixtures — anchor date', () => {
+  it('anchors day 0 to the provided client date', () => {
+    const { journalDays } = getDemoFixtures(userId, '2026-05-22');
+    const dates = journalDays.map((d) => d.date).sort().reverse();
+    // Day 0 is the most recent — should match the anchor exactly.
+    expect(dates[0]).toBe('2026-05-22');
+  });
+
+  it('skips day -2 relative to the anchor (empty calendar state)', () => {
+    const { journalDays } = getDemoFixtures(userId, '2026-05-22');
+    const dates = new Set(journalDays.map((d) => d.date));
+    expect(dates.has('2026-05-20')).toBe(false); // day -2 skipped
+    expect(dates.has('2026-05-21')).toBe(true);  // day -1 present
+    expect(dates.has('2026-05-19')).toBe(true);  // day -3 present
+  });
+
+  it('handles month boundaries when anchor is near month-start', () => {
+    const { journalDays } = getDemoFixtures(userId, '2026-03-02');
+    const dates = new Set(journalDays.map((d) => d.date));
+    // Day -3 from 2026-03-02 = 2026-02-27
+    expect(dates.has('2026-02-27')).toBe(true);
+    // Day -11 = 2026-02-19
+    expect(dates.has('2026-02-19')).toBe(true);
+  });
+});

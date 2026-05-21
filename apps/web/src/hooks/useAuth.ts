@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { DevUser, User } from '@pathforge/shared';
 import { api } from '@/lib/api';
+import { todayLocal } from '@/lib/journalDate';
 
 const ME_KEY = ['auth', 'me'] as const;
 
@@ -33,7 +34,9 @@ export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (userId: string) => {
-      await api.post('/auth/login', { userId });
+      // Pass the browser's local YYYY-MM-DD so the demo-reset hook anchors
+      // seeded journal days to the user's calendar, not the server's UTC day.
+      await api.post('/auth/login', { userId, clientToday: todayLocal() });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ME_KEY });

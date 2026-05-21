@@ -88,11 +88,22 @@ const daysFromNow = (n: number): Date => {
   return d;
 };
 
-/** UTC YYYY-MM-DD for n days before "now". */
-function dateAgo(n: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - n);
-  return d.toISOString().slice(0, 10);
+/** YYYY-MM-DD for n days before the given anchor date.
+ * Anchor is a YYYY-MM-DD string interpreted as that calendar day —
+ * arithmetic is done via UTC math but the input/output are timezone-less
+ * day labels, so passing in the user's local "today" gives back days in
+ * the user's local calendar. */
+function dateOffset(anchor: string, n: number): string {
+  const [y, m, d] = anchor.split('-').map(Number) as [number, number, number];
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - n);
+  return dt.toISOString().slice(0, 10);
+}
+
+/** UTC YYYY-MM-DD for "now", used as the fallback anchor when the client
+ * didn't send its local date on login. */
+function utcToday(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 const oid = () => new Types.ObjectId();
@@ -394,7 +405,8 @@ function buildJournalDays(
   userId: Types.ObjectId,
   rust: RoadmapSeed,
   backend: RoadmapSeed,
-  linearJob: { _id: Types.ObjectId }
+  linearJob: { _id: Types.ObjectId },
+  anchorDate: string
 ): JournalDaySeed[] {
   const day = (
     n: number,
@@ -402,7 +414,7 @@ function buildJournalDays(
   ): JournalDaySeed => ({
     _id: oid(),
     userId,
-    date: dateAgo(n),
+    date: dateOffset(anchorDate, n),
     ...init,
   });
 
@@ -522,7 +534,10 @@ function buildJournalDays(
   ];
 }
 
-export function getDemoFixtures(userId: Types.ObjectId): {
+export function getDemoFixtures(
+  userId: Types.ObjectId,
+  anchorDate: string = utcToday()
+): {
   roadmaps: RoadmapSeed[];
   jobs: (JobSeed & { _id?: Types.ObjectId })[];
   journalDays: JournalDaySeed[];
@@ -538,16 +553,25 @@ export function getDemoFixtures(userId: Types.ObjectId): {
   const linearId = oid();
   (linearJob as JobSeed & { _id: Types.ObjectId })._id = linearId;
 
-  const journalDays = buildJournalDays(userId, rust, backend, { _id: linearId });
+  const journalDays = buildJournalDays(
+    userId,
+    rust,
+    backend,
+    { _id: linearId },
+    anchorDate
+  );
 
   return { roadmaps: [rust, backend, pathforge], jobs, journalDays };
 }
 
-export async function resetDemoData(userId: Types.ObjectId): Promise<void> {
+export async function resetDemoData(
+  userId: Types.ObjectId,
+  anchorDate?: string
+): Promise<void> {
   await RoadmapModel.deleteMany({ userId });
   await JobApplicationModel.deleteMany({ userId });
   await JournalDayModel.deleteMany({ userId });
-  const { roadmaps, jobs, journalDays } = getDemoFixtures(userId);
+  const { roadmaps, jobs, journalDays } = getDemoFixtures(userId, anchorDate);
   await RoadmapModel.insertMany(roadmaps);
   await JobApplicationModel.insertMany(jobs);
   await JournalDayModel.insertMany(journalDays);
