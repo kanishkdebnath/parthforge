@@ -40,6 +40,7 @@ export default fp(async (app) => {
       avatarUrl: user.avatarUrl ?? undefined,
       googleId: user.googleId ?? undefined,
       isDemoUser: user.isDemoUser ?? false,
+      timezone: user.timezone ?? undefined,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
