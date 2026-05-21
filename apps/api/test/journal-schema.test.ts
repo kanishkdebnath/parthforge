@@ -34,6 +34,13 @@ describe('JournalDaySchema', () => {
     expect(JournalDaySchema.safeParse({ ...validDay, date: '14-05-2026' }).success).toBe(false);
   });
 
+  it('rejects calendar-invalid dates', () => {
+    expect(JournalDaySchema.safeParse({ ...validDay, date: '2026-00-14' }).success).toBe(false);
+    expect(JournalDaySchema.safeParse({ ...validDay, date: '2026-13-14' }).success).toBe(false);
+    expect(JournalDaySchema.safeParse({ ...validDay, date: '2026-05-00' }).success).toBe(false);
+    expect(JournalDaySchema.safeParse({ ...validDay, date: '2026-05-32' }).success).toBe(false);
+  });
+
   it('rejects mood scale outside 1..5', () => {
     expect(JournalDaySchema.safeParse({ ...validDay, mood: { scale: 0, tags: [] } }).success).toBe(false);
     expect(JournalDaySchema.safeParse({ ...validDay, mood: { scale: 6, tags: [] } }).success).toBe(false);

@@ -36,7 +36,11 @@ export type JournalReference = z.infer<typeof ReferenceSchema>;
 
 export const DateStringSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD');
+  .regex(
+    /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
+    'Date must be YYYY-MM-DD with a real month and day'
+  );
+export type DateString = z.infer<typeof DateStringSchema>;
 
 export const JournalDaySchema = z.object({
   _id: ObjectIdString,
@@ -52,9 +56,7 @@ export const JournalDaySchema = z.object({
 });
 export type JournalDay = z.infer<typeof JournalDaySchema>;
 
-const EventInputSchema = EventSchema.extend({
-  _id: ObjectIdString.optional(),
-});
+const EventInputSchema = EventSchema.partial({ _id: true });
 
 export const UpsertJournalDayRequestSchema = z.object({
   mood: MoodSchema,
