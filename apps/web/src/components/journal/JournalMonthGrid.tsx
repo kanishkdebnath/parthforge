@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useJournalMonth } from '@/hooks/useJournal';
@@ -26,6 +26,13 @@ interface JournalMonthGridProps {
 export function JournalMonthGrid({ selectedDate, onSelectDate }: JournalMonthGridProps) {
   const [yyyyMm, setYyyyMm] = useState(() => monthOf(selectedDate));
   const { data: days = [] } = useJournalMonth(yyyyMm);
+
+  useEffect(() => {
+    const selectedMonth = monthOf(selectedDate);
+    if (selectedMonth !== yyyyMm) {
+      setYyyyMm(selectedMonth);
+    }
+  }, [selectedDate, yyyyMm]);
 
   const moodByDate = useMemo(() => {
     const map = new Map<string, number>();
