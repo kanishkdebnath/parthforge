@@ -1,8 +1,12 @@
 import type { FastifyInstance } from 'fastify';
-import { LoginRequestSchema } from '@pathforge/shared';
+import {
+  LoginRequestSchema,
+  UpdateMeRequestSchema,
+} from '@pathforge/shared';
 import { UserModel } from '../models/User.js';
 import { SESSION_COOKIE } from '../plugins/auth.js';
 import { resetDemoData } from '../seedDemo.js';
+import { isValidTimezone, userTodayLocal } from '../lib/user-time.js';
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/auth/dev-users', async (_request, reply) => {
@@ -30,7 +34,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
     if (user.isDemoUser) {
       try {
-        await resetDemoData(user._id, parsed.data.clientToday);
+        const anchorDate = userTodayLocal(
+          user.timezone ?? undefined,
+          parsed.data.clientToday
+        );
+        await resetDemoData(user._id, anchorDate);
       } catch (err) {
         request.log.error(
           { err, userId: String(user._id) },
@@ -69,6 +77,57 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(401).send({ error: 'Unauthorized' });
       }
       return request.user;
+    }
+  );
+
+  app.patch(
+    '/api/auth/me',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = UpdateMeRequestSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'Invalid body',
+          details: parsed.error.issues.map((i) => ({
+            path: i.path.join('.'),
+            message: i.message,
+          })),
+        });
+      }
+
+      const { timezone } = parsed.data;
+      if (typeof timezone === 'string' && !isValidTimezone(timezone)) {
+        return reply.code(400).send({ error: 'Invalid timezone' });
+      }
+
+      const update: Record<string, unknown> = {};
+      if (timezone === null) {
+        update.$unset = { timezone: '' };
+      } else if (typeof timezone === 'string') {
+        update.$set = { timezone };
+      }
+
+      // Empty patch is a no-op — return the current user.
+      const doc =
+        Object.keys(update).length === 0
+          ? await UserModel.findById(request.user!._id).lean()
+          : await UserModel.findByIdAndUpdate(request.user!._id, update, {
+              new: true,
+            }).lean();
+
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+
+      return {
+        _id: String(doc._id),
+        email: doc.email,
+        name: doc.name,
+        avatarUrl: doc.avatarUrl ?? undefined,
+        googleId: doc.googleId ?? undefined,
+        isDemoUser: doc.isDemoUser ?? false,
+        timezone: doc.timezone ?? undefined,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      };
     }
   );
 }
