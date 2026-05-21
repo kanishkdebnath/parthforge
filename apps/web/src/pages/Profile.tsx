@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { TimezoneCard } from '@/components/profile/TimezoneCard';
 import { useMe } from '@/hooks/useAuth';
 
 export default function Profile() {
@@ -14,7 +15,7 @@ export default function Profile() {
     .toUpperCase();
 
   return (
-    <main className="container py-10 max-w-xl">
+    <main className="container py-10 max-w-xl space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Profile</CardTitle>
@@ -30,6 +31,8 @@ export default function Profile() {
           </div>
         </CardContent>
       </Card>
+
+      <TimezoneCard />
     </main>
   );
 }
