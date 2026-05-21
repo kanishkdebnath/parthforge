@@ -11,6 +11,7 @@ import RoadmapsListPage from '@/pages/RoadmapsListPage';
 import RoadmapDetailPage from '@/pages/RoadmapDetailPage';
 import JobsListPage from '@/pages/JobsListPage';
 import JobDetailPage from '@/pages/JobDetailPage';
+import JournalPage from '@/pages/JournalPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/jobs" element={<Protected><JobsListPage /></Protected>} />
         <Route path="/jobs/archived" element={<Protected><JobsListPage archived /></Protected>} />
         <Route path="/jobs/:id" element={<Protected><JobDetailPage /></Protected>} />
+        <Route path="/journal" element={<Protected><JournalPage /></Protected>} />
         <Route path="*" element={<Protected><Dashboard /></Protected>} />
       </Routes>
       <TourPanel />
