@@ -56,7 +56,7 @@ describe('UpdateMeRequestSchema', () => {
     ).toBe(false);
   });
 
-  it('rejects unknown fields would be fine to pass through (Zod default strict=false)', () => {
+  it('passes through unknown fields (Zod default passthrough)', () => {
     expect(
       UpdateMeRequestSchema.safeParse({ timezone: 'UTC', name: 'X' }).success
     ).toBe(true);

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,12 @@ export function TimezoneCard() {
 
   const [selected, setSelected] = useState<string | null>(me?.timezone ?? null);
   const [filter, setFilter] = useState('');
+
+  // Keep the draft in sync if me.timezone is updated externally
+  // (e.g., another tab saving + cache refetch).
+  useEffect(() => {
+    setSelected(me?.timezone ?? null);
+  }, [me?.timezone]);
 
   const filtered = useMemo(() => {
     if (!filter) return options;
