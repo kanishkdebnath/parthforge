@@ -20,7 +20,7 @@ export function MoodPicker({ value, onChange }: MoodPickerProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div data-tour="mood-picker" className="space-y-4">
       <div>
         <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
           Mood
