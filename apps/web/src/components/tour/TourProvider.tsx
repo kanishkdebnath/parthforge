@@ -87,6 +87,10 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
 
   const openSection = useCallback(
     (group: TourStepGroup, opts?: { resetIfDone?: boolean }) => {
+      if (autoReturnTimer.current !== null) {
+        window.clearTimeout(autoReturnTimer.current);
+        autoReturnTimer.current = null;
+      }
       setCompletedStepIds((prev) => {
         let nextCompleted = prev;
         if (opts?.resetIfDone && isGroupComplete(group, prev)) {
@@ -109,6 +113,10 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   );
 
   const backToMenu = useCallback(() => {
+    if (autoReturnTimer.current !== null) {
+      window.clearTimeout(autoReturnTimer.current);
+      autoReturnTimer.current = null;
+    }
     setActiveSection(null);
   }, []);
 

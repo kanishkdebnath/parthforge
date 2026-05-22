@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useTour } from './TourProvider';
+import { useTour, type SectionStatus } from './TourProvider';
 import { TOUR_STEPS, type TourStepGroup } from './tourSteps';
 
 type SectionMeta = {
@@ -110,7 +110,7 @@ function PanelHeader({
   onClose,
 }: {
   activeSection: TourStepGroup | null;
-  sectionStatus: (group: TourStepGroup) => { total: number; completed: number };
+  sectionStatus: (group: TourStepGroup) => SectionStatus;
   onBack: () => void;
   onClose: () => void;
 }) {
@@ -174,7 +174,7 @@ function MenuView({
   sectionStatus,
   onOpenSection,
 }: {
-  sectionStatus: (group: TourStepGroup) => { state: 'not-started' | 'in-progress' | 'done'; total: number; completed: number };
+  sectionStatus: (group: TourStepGroup) => SectionStatus;
   onOpenSection: (group: TourStepGroup, opts?: { resetIfDone?: boolean }) => void;
 }) {
   return (
