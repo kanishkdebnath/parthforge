@@ -9,14 +9,7 @@ import {
   todayLocal,
   monthOf,
 } from '@/lib/journalDate';
-
-const SCALE_BG: Record<number, string> = {
-  1: 'bg-red-300 dark:bg-red-900 text-red-900 dark:text-red-100',
-  2: 'bg-orange-300 dark:bg-orange-900 text-orange-900 dark:text-orange-100',
-  3: 'bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-200',
-  4: 'bg-emerald-300 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100',
-  5: 'bg-sky-300 dark:bg-sky-900 text-sky-900 dark:text-sky-100',
-};
+import { MOOD_SCALE_BG } from '@/lib/moodColors';
 
 interface JournalMonthGridProps {
   selectedDate: string;
@@ -87,7 +80,7 @@ export function JournalMonthGrid({ selectedDate, onSelectDate }: JournalMonthGri
               onClick={() => onSelectDate(date)}
               className={cn(
                 'aspect-square rounded-md text-[11px] flex items-center justify-center transition',
-                scale ? SCALE_BG[scale] : 'bg-slate-50 dark:bg-slate-900 text-slate-400',
+                scale ? MOOD_SCALE_BG[scale] : 'bg-slate-50 dark:bg-slate-900 text-slate-400',
                 isSelected && 'ring-2 ring-slate-900 dark:ring-slate-100',
                 isToday && !isSelected && 'ring-1 ring-slate-400'
               )}
