@@ -48,6 +48,9 @@ export function Navbar() {
             <Link to="/jobs" data-tour="nav-jobs" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
               Jobs
             </Link>
+            <Link to="/budget" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+              Budget
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">
