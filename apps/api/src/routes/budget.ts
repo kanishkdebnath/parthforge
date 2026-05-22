@@ -8,6 +8,8 @@ import {
   UpdateBudgetCategoryRequestSchema,
   CreateBudgetTransactionRequestSchema,
   UpdateBudgetTransactionRequestSchema,
+  CreateBudgetRecurringRequestSchema,
+  UpdateBudgetRecurringRequestSchema,
   BulkUpsertTargetsRequestSchema,
   BudgetReorderRequestSchema,
   CategoryKindSchema,
@@ -17,6 +19,7 @@ import { BudgetCategoryGroupModel } from '../models/BudgetCategoryGroup.js';
 import { BudgetCategoryModel } from '../models/BudgetCategory.js';
 import { BudgetTransactionModel } from '../models/BudgetTransaction.js';
 import { BudgetTargetModel } from '../models/BudgetTarget.js';
+import { BudgetRecurringTemplateModel } from '../models/BudgetRecurringTemplate.js';
 import {
   defaultGroupsSeed,
   defaultCategoriesSeed,
@@ -24,6 +27,7 @@ import {
   serializeBudgetCategory,
   serializeBudgetTransaction,
   serializeBudgetTarget,
+  serializeBudgetRecurring,
   monthRangeUtc,
 } from '../lib/budget-helpers.js';
 import { validateReorderIds } from '../lib/reorder.js';
@@ -621,6 +625,151 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
       }).lean();
       if (!doc) return reply.code(404).send({ error: 'Not found' });
       return { ok: true };
+    }
+  );
+
+  // ---- Recurring template routes ----
+
+  // GET /api/budget/recurring
+  app.get(
+    '/api/budget/recurring',
+    { preHandler: [app.authenticate] },
+    async (request) => {
+      const userId = request.user!._id;
+      const docs = await BudgetRecurringTemplateModel.find({ userId })
+        .sort({ active: -1, createdAt: 1 })
+        .lean();
+      return docs.map((d) => serializeBudgetRecurring(d as never));
+    }
+  );
+
+  // POST /api/budget/recurring
+  app.post(
+    '/api/budget/recurring',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = CreateBudgetRecurringRequestSchema.safeParse(request.body);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+
+      const categoryExists = await BudgetCategoryModel.exists({
+        _id: parsed.data.categoryId,
+        userId,
+      });
+      if (!categoryExists) {
+        return reply.code(400).send({ error: 'invalid_category' });
+      }
+
+      const doc = await BudgetRecurringTemplateModel.create({
+        userId: new Types.ObjectId(userId),
+        label: parsed.data.label,
+        categoryId: new Types.ObjectId(parsed.data.categoryId),
+        amount: parsed.data.amount,
+        cadence: 'monthly',
+        dayOfMonth: parsed.data.dayOfMonth,
+        active: parsed.data.active ?? true,
+      });
+      return reply
+        .code(201)
+        .send(serializeBudgetRecurring(doc.toObject() as never));
+    }
+  );
+
+  // PATCH /api/budget/recurring/:id
+  app.patch(
+    '/api/budget/recurring/:id',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isObjectId(id)) return reply.code(400).send({ error: 'Invalid id' });
+      const parsed = UpdateBudgetRecurringRequestSchema.safeParse(request.body);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+
+      if (parsed.data.categoryId) {
+        const ok = await BudgetCategoryModel.exists({
+          _id: parsed.data.categoryId,
+          userId,
+        });
+        if (!ok) return reply.code(400).send({ error: 'invalid_category' });
+      }
+
+      const doc = await BudgetRecurringTemplateModel.findOneAndUpdate(
+        { _id: id, userId },
+        { $set: parsed.data },
+        { new: true }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeBudgetRecurring(doc as never);
+    }
+  );
+
+  // DELETE /api/budget/recurring/:id  → hard delete
+  app.delete(
+    '/api/budget/recurring/:id',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isObjectId(id)) return reply.code(400).send({ error: 'Invalid id' });
+      const doc = await BudgetRecurringTemplateModel.findOneAndDelete({
+        _id: id,
+        userId: request.user!._id,
+      }).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return { ok: true };
+    }
+  );
+
+  // POST /api/budget/recurring/:id/apply
+  // Inactive: 409 'template_inactive'. Re-apply within same month: 409
+  // 'already_applied' with the existing lastRunMonth.
+  app.post(
+    '/api/budget/recurring/:id/apply',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isObjectId(id)) return reply.code(400).send({ error: 'Invalid id' });
+      const userId = request.user!._id;
+
+      const tmpl = await BudgetRecurringTemplateModel.findOne({
+        _id: id,
+        userId,
+      });
+      if (!tmpl) return reply.code(404).send({ error: 'Not found' });
+      if (!tmpl.active) {
+        return reply.code(409).send({ error: 'template_inactive' });
+      }
+
+      const month = defaultCurrentMonth();
+      if (tmpl.lastRunMonth === month) {
+        return reply.code(409).send({
+          error: 'already_applied',
+          lastRunMonth: tmpl.lastRunMonth,
+        });
+      }
+
+      // Date for the transaction: dayOfMonth of the current month at 09:00 UTC.
+      // Hour chosen to be unambiguously "this day" across most user timezones.
+      const parts = month.split('-');
+      const y = Number(parts[0]!);
+      const m = Number(parts[1]!);
+      const date = new Date(Date.UTC(y, m - 1, tmpl.dayOfMonth, 9, 0, 0, 0));
+
+      const txn = await BudgetTransactionModel.create({
+        userId: new Types.ObjectId(userId),
+        date,
+        categoryId: tmpl.categoryId,
+        amount: tmpl.amount,
+        description: tmpl.label,
+        recurringTemplateId: tmpl._id,
+      });
+
+      tmpl.lastRunMonth = month;
+      await tmpl.save();
+
+      return reply
+        .code(201)
+        .send(serializeBudgetTransaction(txn.toObject() as never));
     }
   );
 }

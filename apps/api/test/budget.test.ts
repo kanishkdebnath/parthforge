@@ -111,4 +111,17 @@ describe('Budget routes (smoke — no session)', () => {
     });
     expect(res.statusCode).toBe(401);
   });
+
+  it('GET /api/budget/recurring returns 401', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/budget/recurring' });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('POST /api/budget/recurring/:id/apply returns 401', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/budget/recurring/507f1f77bcf86cd799439011/apply',
+    });
+    expect(res.statusCode).toBe(401);
+  });
 });
