@@ -414,9 +414,9 @@ A new `BudgetWidget` joins the existing secondary-widget grid alongside `Roadmap
 
 ### Edge cases
 - **Deleting a category with transactions** → archive (soft) only, never hard delete. Archived categories appear in historical month reports (grey) but are hidden from the input dropdown.
-- **Deleting a group that still has live categories** → 409 with `{ reason: 'group_has_active_categories' }` and a hint to move/archive children first.
+- **Deleting a group that still has live categories** → 409 with `{ error: 'group_has_active_categories' }` and a hint to move/archive children first.
 - **Editing a transaction's category to a different `kind`** (e.g., expense → income) → allowed; the report and totals recompute. No special migration.
-- **Applying a recurring template twice in the same month** → 409 with `{ reason: 'already_applied', lastRunMonth }`.
+- **Applying a recurring template twice in the same month** → 409 with `{ error: 'already_applied', lastRunMonth }`.
 - **Backdating to a month with no targets set** → report renders actuals-only (no target overlay, no progress bars). Narrative adapts: *"In March, you spent ₹X — no plan was set for this month."*
 - **Future-dating a transaction** → allowed (lets users pre-log known upcoming spends). Future-dated transactions appear in their month's column normally; no special filtering or toggle in v1. The month report includes them in totals.
 - **Currency change** → does not retroactively convert past amounts. Symbol updates everywhere; numbers stay the same integer minor units.

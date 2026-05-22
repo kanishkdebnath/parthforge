@@ -30,6 +30,7 @@ import {
   serializeBudgetTarget,
   serializeBudgetRecurring,
   monthRangeUtc,
+  toIsoMonth,
   buildReportRows,
   totalsFromRows,
   targetTotalsFromRows,
@@ -594,10 +595,10 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
         }
       }
 
-      // Upsert each. Sequential to avoid hammering Mongo with parallel
+      // Upsert each sequentially to avoid hammering Mongo with parallel
       // upserts on the same (userId, month) index slice.
-      const operations = items.map((item) =>
-        BudgetTargetModel.updateOne(
+      for (const item of items) {
+        await BudgetTargetModel.updateOne(
           { userId, month, categoryId: item.categoryId },
           {
             $set: { amount: item.amount },
@@ -608,9 +609,8 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
             },
           },
           { upsert: true }
-        )
-      );
-      for (const op of operations) await op;
+        );
+      }
 
       const docs = await BudgetTargetModel.find({ userId, month }).lean();
       return docs.map((d) => serializeBudgetTarget(d as never));
@@ -870,8 +870,5 @@ function isDuplicateKey(err: unknown): boolean {
 }
 
 function defaultCurrentMonth(): string {
-  const now = new Date();
-  const y = now.getUTCFullYear();
-  const m = String(now.getUTCMonth() + 1).padStart(2, '0');
-  return `${y}-${m}`;
+  return toIsoMonth(new Date());
 }
