@@ -8,6 +8,8 @@ const userSchema = new Schema(
     googleId: { type: String, index: true, sparse: true },
     isDemoUser: { type: Boolean, default: false },
     timezone: { type: String },
+    // ISO 4217. Default INR keeps existing flows working.
+    currency: { type: String, default: 'INR' },
   },
   { timestamps: true }
 );
