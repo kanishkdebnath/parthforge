@@ -1,4 +1,4 @@
-export type TourStepGroup = 'Roadmaps' | 'Jobs';
+export type TourStepGroup = 'Roadmaps' | 'Jobs' | 'Journal';
 
 export type TourStep = {
   id: string;
@@ -81,5 +81,43 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'Export an interview report',
     body: 'Generates an LLM prompt for a candid post-interview write-up. From the job actions menu.',
     target: '[data-tour="job-export-report"]',
+  },
+  {
+    id: 'journal-today-card',
+    group: 'Journal',
+    title: 'Today at a glance',
+    body:
+      'The dashboard card prompts you when there\'s no entry, or shows mood + summary once you\'ve written today\'s.',
+    target: '[data-tour="journal-today-card"]',
+  },
+  {
+    id: 'journal-open',
+    group: 'Journal',
+    title: 'Open your journal',
+    body: 'The full calendar lives at /journal — mood heatmap on the left, day editor on the right.',
+    cta: { label: 'Open Journal', to: '/journal' },
+    target: '[data-tour="nav-journal"]',
+    nextOnPath: '/journal',
+  },
+  {
+    id: 'journal-day-mood',
+    group: 'Journal',
+    title: 'Set the mood',
+    body: 'Pick a 1–5 emoji and optional tags (focused, grateful, tired…).',
+    target: '[data-tour="mood-picker"]',
+  },
+  {
+    id: 'journal-add-event',
+    group: 'Journal',
+    title: 'Capture an important event',
+    body: 'Star the ones that mattered. The optional time field timestamps the moment.',
+    target: '[data-tour="add-event"]',
+  },
+  {
+    id: 'journal-add-reference',
+    group: 'Journal',
+    title: 'Link the day to a goal',
+    body: 'Attach a reference to a roadmap, milestone, or job. Stays scoped to your own docs.',
+    target: '[data-tour="add-reference"]',
   },
 ];
