@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CurrencyCodeSchema } from './budget.js';
 
 export const UserSchema = z.object({
   _id: z.string(),
@@ -7,10 +8,10 @@ export const UserSchema = z.object({
   avatarUrl: z.string().url().optional(),
   googleId: z.string().optional(),
   isDemoUser: z.boolean().optional(),
-  // IANA timezone name (e.g., "America/Los_Angeles"). Optional — when set,
-  // becomes the source of truth for resolving the user's "today" in any
-  // server-side date logic.
   timezone: z.string().min(1).max(80).optional(),
+  // ISO 4217. Server defaults to 'INR' on creation and on the GET /me
+  // response if the underlying doc lacks the field (pre-migration users).
+  currency: CurrencyCodeSchema.optional(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -43,10 +44,11 @@ export const DevUserSchema = UserSchema.pick({
 
 export type DevUser = z.infer<typeof DevUserSchema>;
 
-// Profile self-update. Null clears a field; undefined leaves it alone.
-// The IANA name's semantic validity is checked on the server via
-// Intl.DateTimeFormat — this schema only enforces shape.
+// Profile self-update. Null clears a field where allowed; undefined leaves
+// it alone. Currency is not nullable — every user has a currency, even if
+// the field was absent on legacy docs.
 export const UpdateMeRequestSchema = z.object({
   timezone: z.string().min(1).max(80).nullable().optional(),
+  currency: CurrencyCodeSchema.optional(),
 });
 export type UpdateMeRequest = z.infer<typeof UpdateMeRequestSchema>;

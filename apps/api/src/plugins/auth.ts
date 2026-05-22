@@ -41,6 +41,7 @@ export default fp(async (app) => {
       googleId: user.googleId ?? undefined,
       isDemoUser: user.isDemoUser ?? false,
       timezone: user.timezone ?? undefined,
+      currency: user.currency ?? 'INR',
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

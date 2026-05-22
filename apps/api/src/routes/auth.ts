@@ -95,19 +95,23 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
-      const { timezone } = parsed.data;
+      const { timezone, currency } = parsed.data;
       if (typeof timezone === 'string' && !isValidTimezone(timezone)) {
         return reply.code(400).send({ error: 'Invalid timezone' });
       }
 
-      const update: Record<string, unknown> = {};
-      if (timezone === null) {
-        update.$unset = { timezone: '' };
-      } else if (typeof timezone === 'string') {
-        update.$set = { timezone };
-      }
+      const $set: Record<string, unknown> = {};
+      const $unset: Record<string, unknown> = {};
 
-      // Empty patch is a no-op — return the current user.
+      if (timezone === null) $unset.timezone = '';
+      else if (typeof timezone === 'string') $set.timezone = timezone;
+
+      if (typeof currency === 'string') $set.currency = currency;
+
+      const update: Record<string, unknown> = {};
+      if (Object.keys($set).length > 0) update.$set = $set;
+      if (Object.keys($unset).length > 0) update.$unset = $unset;
+
       const doc =
         Object.keys(update).length === 0
           ? await UserModel.findById(request.user!._id).lean()
@@ -125,6 +129,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         googleId: doc.googleId ?? undefined,
         isDemoUser: doc.isDemoUser ?? false,
         timezone: doc.timezone ?? undefined,
+        currency: doc.currency ?? 'INR',
         createdAt: doc.createdAt,
         updatedAt: doc.updatedAt,
       };
