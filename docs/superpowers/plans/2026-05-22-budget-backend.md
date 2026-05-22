@@ -48,7 +48,7 @@
 
 - Steps marked `[Read first]` are orientation reads. Skip if you've already absorbed the file.
 - All `Run` commands are from the repo root (`/Users/kanishkdebnath/Developer/pathforge`).
-- Type-check the package you changed before committing: `npm -w api run typecheck` and/or `npm -w @pathforge/shared run build` (whichever applies). Tests: `npm -w api test -- --run` for one-shot.
+- Type-check before committing: `npx tsc --noEmit -p apps/api/tsconfig.json` covers both the API and the shared package (the shared package has no `build` script — it's consumed as TS source through workspaces). Tests: `npm -w api test -- --run` for one-shot.
 - Commit at the end of each task with the project's existing tone: `feat(api): …`, `chore(shared): …`, `test(api): …`.
 - `request.user!._id` is the userId convention. Never read `userId` from the body.
 - Amounts in storage and over the wire are integer minor units (paise for INR). UI converts at the edge.
@@ -217,10 +217,13 @@ export const UpdateBudgetCategoryRequestSchema = z.object({
 });
 export type UpdateBudgetCategoryRequest = z.infer<typeof UpdateBudgetCategoryRequestSchema>;
 
-export const ReorderRequestSchema = z.object({
+// Renamed from a plain `ReorderRequestSchema` to avoid the barrel-export
+// collision with the identically-named export in roadmap.ts (mirrors the
+// same workaround in jobApplication.ts → ReorderRoundsRequestSchema).
+export const BudgetReorderRequestSchema = z.object({
   ids: z.array(ObjectIdString).min(1),
 });
-export type ReorderRequest = z.infer<typeof ReorderRequestSchema>;
+export type BudgetReorderRequest = z.infer<typeof BudgetReorderRequestSchema>;
 
 export const CreateBudgetTransactionRequestSchema = z.object({
   date: z.coerce.date(),
@@ -334,10 +337,9 @@ export * from './journalDay.js';
 export * from './budget.js';
 ```
 
-- [ ] **Step 4: Build the shared package and verify**
+- [ ] **Step 4: Verify the shared package compiles**
 
-Run: `npm -w @pathforge/shared run build`
-Expected: completes without errors.
+The `@pathforge/shared` package has no `build` script — it's consumed as TypeScript source directly through npm workspaces. Verification is implicit: if `npx tsc --noEmit -p apps/api/tsconfig.json` succeeds in a later step (or if the schema test file compiles and imports cleanly), the shared package is fine. Skip this step explicitly.
 
 - [ ] **Step 5: Create the schema round-trip test**
 
@@ -762,8 +764,8 @@ describe('UpdateMeRequestSchema (currency field)', () => {
 
 - [ ] **Step 8: Type-check and run tests**
 
-Run: `npm -w @pathforge/shared run build && npm -w api run typecheck && npm -w api test -- --run user-schema auth-patch-me`
-Expected: build succeeds, typecheck succeeds, all listed tests pass.
+Run: `npx tsc --noEmit -p apps/api/tsconfig.json && npm -w api test -- --run user-schema auth-patch-me`
+Expected: typecheck succeeds, all listed tests pass. (The shared package has no `build` script — TypeScript resolves it via `src/index.ts` directly through workspaces; if `npx tsc --noEmit -p apps/api/tsconfig.json` succeeds, the shared package compiles.)
 
 - [ ] **Step 9: Commit**
 
@@ -1010,7 +1012,7 @@ export const BudgetRecurringTemplateModel = model(
 
 - [ ] **Step 7: Type-check**
 
-Run: `npm -w api run typecheck`
+Run: `npx tsc --noEmit -p apps/api/tsconfig.json`
 Expected: succeeds.
 
 - [ ] **Step 8: Commit**
@@ -1725,7 +1727,7 @@ import { z } from 'zod';
 import {
   CreateBudgetGroupRequestSchema,
   UpdateBudgetGroupRequestSchema,
-  ReorderRequestSchema,
+  BudgetReorderRequestSchema,
 } from '@pathforge/shared';
 import { BudgetCategoryGroupModel } from '../models/BudgetCategoryGroup.js';
 import { BudgetCategoryModel } from '../models/BudgetCategory.js';
@@ -1904,7 +1906,7 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
     '/api/budget/groups/reorder',
     { preHandler: [app.authenticate] },
     async (request, reply) => {
-      const parsed = ReorderRequestSchema.safeParse(request.body);
+      const parsed = BudgetReorderRequestSchema.safeParse(request.body);
       if (!parsed.success) return sendValidationError(reply, parsed.error);
       const userId = request.user!._id;
 
@@ -2020,7 +2022,7 @@ describe('Budget routes (smoke — no session)', () => {
 
 - [ ] **Step 5: Run tests and typecheck**
 
-Run: `npm -w api run typecheck && npm -w api test -- --run budget`
+Run: `npx tsc --noEmit -p apps/api/tsconfig.json && npm -w api test -- --run budget`
 Expected: typecheck passes; smoke tests pass.
 
 - [ ] **Step 6: Commit**
@@ -2060,7 +2062,7 @@ import {
   UpdateBudgetGroupRequestSchema,
   CreateBudgetCategoryRequestSchema,
   UpdateBudgetCategoryRequestSchema,
-  ReorderRequestSchema,
+  BudgetReorderRequestSchema,
   CategoryKindSchema,
 } from '@pathforge/shared';
 ```
@@ -2300,7 +2302,7 @@ Inside the same `describe('Budget routes (smoke — no session)', ...)` block, a
 
 - [ ] **Step 3: Run typecheck + tests**
 
-Run: `npm -w api run typecheck && npm -w api test -- --run budget`
+Run: `npx tsc --noEmit -p apps/api/tsconfig.json && npm -w api test -- --run budget`
 Expected: passes.
 
 - [ ] **Step 4: Commit**
@@ -2340,10 +2342,9 @@ import {
   UpdateBudgetCategoryRequestSchema,
   CreateBudgetTransactionRequestSchema,
   UpdateBudgetTransactionRequestSchema,
-  ReorderRequestSchema,
+  BudgetReorderRequestSchema,
   CategoryKindSchema,
   MonthStringSchema,
-  type CategoryKind,
 } from '@pathforge/shared';
 ```
 
@@ -2525,7 +2526,7 @@ Inside the existing describe block in `budget.test.ts`:
 
 - [ ] **Step 5: Run typecheck + tests**
 
-Run: `npm -w api run typecheck && npm -w api test -- --run budget`
+Run: `npx tsc --noEmit -p apps/api/tsconfig.json && npm -w api test -- --run budget`
 Expected: passes.
 
 - [ ] **Step 6: Commit**
@@ -2676,7 +2677,7 @@ import {
 
 - [ ] **Step 4: Typecheck + tests**
 
-Run: `npm -w api run typecheck && npm -w api test -- --run budget`
+Run: `npx tsc --noEmit -p apps/api/tsconfig.json && npm -w api test -- --run budget`
 Expected: passes.
 
 - [ ] **Step 5: Commit**
@@ -2882,7 +2883,7 @@ import {
 
 - [ ] **Step 4: Typecheck + tests**
 
-Run: `npm -w api run typecheck && npm -w api test -- --run budget`
+Run: `npx tsc --noEmit -p apps/api/tsconfig.json && npm -w api test -- --run budget`
 Expected: passes.
 
 - [ ] **Step 5: Commit**
@@ -3036,7 +3037,7 @@ import { UserModel } from '../models/User.js';
 
 - [ ] **Step 4: Typecheck + full test suite**
 
-Run: `npm -w api run typecheck && npm -w api test -- --run`
+Run: `npx tsc --noEmit -p apps/api/tsconfig.json && npm -w api test -- --run`
 Expected: all tests pass (budget + existing).
 
 - [ ] **Step 5: Commit**
@@ -3075,7 +3076,7 @@ Expected: all tests pass — `budget-schema`, `budget-helpers`, `budget`, and ev
 
 - [ ] **Step 3: Run typecheck on every workspace**
 
-Run: `npm -w @pathforge/shared run build && npm -w api run typecheck && npm -w web run typecheck`
+Run: `npx tsc --noEmit -p apps/api/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json`
 Expected: all succeed. (The web typecheck should pass even though no UI exists yet — the shared package's new exports are not yet consumed.)
 
 - [ ] **Step 4: Manual smoke (optional, requires docker)**
