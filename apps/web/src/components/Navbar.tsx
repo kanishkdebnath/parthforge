@@ -42,7 +42,7 @@ export function Navbar() {
             <Link to="/roadmaps" data-tour="nav-roadmaps" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
               Roadmaps
             </Link>
-            <Link to="/journal" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+            <Link to="/journal" data-tour="nav-journal" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
               Journal
             </Link>
             <Link to="/jobs" data-tour="nav-jobs" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">

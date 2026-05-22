@@ -40,6 +40,7 @@ export function EventList({ events, onChange }: EventListProps) {
       {events.length < 20 && (
         <button
           type="button"
+          data-tour="add-event"
           onClick={add}
           className="mt-2 px-3 py-1.5 text-xs text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 rounded-md hover:bg-slate-50 dark:hover:bg-slate-900"
         >

@@ -12,7 +12,7 @@ export function JournalTodayCard() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6">
+      <div data-tour="journal-today-card" className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6">
         <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
       </div>
     );
@@ -20,7 +20,7 @@ export function JournalTodayCard() {
 
   if (!day) {
     return (
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6">
+      <div data-tour="journal-today-card" className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6">
         <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
           Today's journal
         </div>
@@ -54,7 +54,7 @@ export function JournalTodayCard() {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6">
+    <div data-tour="journal-today-card" className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6">
       <div className="flex items-baseline justify-between mb-2">
         <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Today's journal
