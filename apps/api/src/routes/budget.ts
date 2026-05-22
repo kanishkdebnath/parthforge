@@ -8,6 +8,7 @@ import {
   UpdateBudgetCategoryRequestSchema,
   CreateBudgetTransactionRequestSchema,
   UpdateBudgetTransactionRequestSchema,
+  BulkUpsertTargetsRequestSchema,
   BudgetReorderRequestSchema,
   CategoryKindSchema,
   MonthStringSchema,
@@ -15,12 +16,14 @@ import {
 import { BudgetCategoryGroupModel } from '../models/BudgetCategoryGroup.js';
 import { BudgetCategoryModel } from '../models/BudgetCategory.js';
 import { BudgetTransactionModel } from '../models/BudgetTransaction.js';
+import { BudgetTargetModel } from '../models/BudgetTarget.js';
 import {
   defaultGroupsSeed,
   defaultCategoriesSeed,
   serializeBudgetGroup,
   serializeBudgetCategory,
   serializeBudgetTransaction,
+  serializeBudgetTarget,
   monthRangeUtc,
 } from '../lib/budget-helpers.js';
 import { validateReorderIds } from '../lib/reorder.js';
@@ -533,6 +536,86 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
       const { id } = request.params as { id: string };
       if (!isObjectId(id)) return reply.code(400).send({ error: 'Invalid id' });
       const doc = await BudgetTransactionModel.findOneAndDelete({
+        _id: id,
+        userId: request.user!._id,
+      }).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return { ok: true };
+    }
+  );
+
+  // ---- Target routes ----
+
+  // GET /api/budget/targets?month=YYYY-MM
+  app.get(
+    '/api/budget/targets',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const QuerySchema = z.object({ month: MonthStringSchema });
+      const parsed = QuerySchema.safeParse(request.query);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+      const docs = await BudgetTargetModel.find({
+        userId,
+        month: parsed.data.month,
+      }).lean();
+      return docs.map((d) => serializeBudgetTarget(d as never));
+    }
+  );
+
+  // PUT /api/budget/targets — bulk upsert for a month
+  app.put(
+    '/api/budget/targets',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = BulkUpsertTargetsRequestSchema.safeParse(request.body);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+      const { month, items } = parsed.data;
+
+      // Validate every categoryId belongs to user.
+      const categoryIds = items.map((i) => i.categoryId);
+      if (categoryIds.length > 0) {
+        const owned = await BudgetCategoryModel.countDocuments({
+          userId,
+          _id: { $in: categoryIds },
+        });
+        if (owned !== new Set(categoryIds).size) {
+          return reply.code(400).send({ error: 'invalid_category' });
+        }
+      }
+
+      // Upsert each. Sequential to avoid hammering Mongo with parallel
+      // upserts on the same (userId, month) index slice.
+      const operations = items.map((item) =>
+        BudgetTargetModel.updateOne(
+          { userId, month, categoryId: item.categoryId },
+          {
+            $set: { amount: item.amount },
+            $setOnInsert: {
+              userId: new Types.ObjectId(userId),
+              categoryId: new Types.ObjectId(item.categoryId),
+              month,
+            },
+          },
+          { upsert: true }
+        )
+      );
+      for (const op of operations) await op;
+
+      const docs = await BudgetTargetModel.find({ userId, month }).lean();
+      return docs.map((d) => serializeBudgetTarget(d as never));
+    }
+  );
+
+  // DELETE /api/budget/targets/:id — hard delete a single target
+  app.delete(
+    '/api/budget/targets/:id',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isObjectId(id)) return reply.code(400).send({ error: 'Invalid id' });
+      const doc = await BudgetTargetModel.findOneAndDelete({
         _id: id,
         userId: request.user!._id,
       }).lean();
