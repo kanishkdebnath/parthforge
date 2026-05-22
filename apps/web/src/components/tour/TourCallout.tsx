@@ -5,12 +5,12 @@ import { useTour } from './TourProvider';
 type Position = { top: number; left: number };
 
 export function TourCallout() {
-  const { isDemoUser, currentStep } = useTour();
+  const { isDemoUser, open, activeSection, currentStep } = useTour();
   const [pos, setPos] = useState<Position | null>(null);
   const [visible, setVisible] = useState(false);
 
   useLayoutEffect(() => {
-    if (!isDemoUser || !currentStep?.target) {
+    if (!isDemoUser || !open || activeSection === null || !currentStep?.target) {
       setPos(null);
       setVisible(false);
       return;
@@ -43,9 +43,11 @@ export function TourCallout() {
       window.removeEventListener('resize', compute);
       window.removeEventListener('scroll', compute, true);
     };
-  }, [isDemoUser, currentStep]);
+  }, [isDemoUser, open, activeSection, currentStep]);
 
-  if (!isDemoUser || !currentStep?.target || !visible || !pos) return null;
+  if (!isDemoUser || !open || activeSection === null || !currentStep?.target || !visible || !pos) {
+    return null;
+  }
 
   return (
     <div
