@@ -124,4 +124,20 @@ describe('Budget routes (smoke — no session)', () => {
     });
     expect(res.statusCode).toBe(401);
   });
+
+  it('GET /api/budget/report returns 401', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/budget/report?month=2026-05',
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('GET /api/budget/report (no month) returns 401', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/budget/report',
+    });
+    expect(res.statusCode).toBe(401);
+  });
 });

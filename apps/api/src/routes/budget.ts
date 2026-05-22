@@ -20,6 +20,7 @@ import { BudgetCategoryModel } from '../models/BudgetCategory.js';
 import { BudgetTransactionModel } from '../models/BudgetTransaction.js';
 import { BudgetTargetModel } from '../models/BudgetTarget.js';
 import { BudgetRecurringTemplateModel } from '../models/BudgetRecurringTemplate.js';
+import { UserModel } from '../models/User.js';
 import {
   defaultGroupsSeed,
   defaultCategoriesSeed,
@@ -29,6 +30,10 @@ import {
   serializeBudgetTarget,
   serializeBudgetRecurring,
   monthRangeUtc,
+  buildReportRows,
+  totalsFromRows,
+  targetTotalsFromRows,
+  generateNarrative,
 } from '../lib/budget-helpers.js';
 import { validateReorderIds } from '../lib/reorder.js';
 
@@ -770,6 +775,81 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
       return reply
         .code(201)
         .send(serializeBudgetTransaction(txn.toObject() as never));
+    }
+  );
+
+  // GET /api/budget/report?month=YYYY-MM
+  // Single round-trip aggregation: returns groups+categories+totals+narrative
+  // for the frontend report page and the dashboard widget.
+  app.get(
+    '/api/budget/report',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const QuerySchema = z.object({
+        month: MonthStringSchema.optional(),
+      });
+      const parsed = QuerySchema.safeParse(request.query);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+      const month = parsed.data.month ?? defaultCurrentMonth();
+      const { start, endExclusive } = monthRangeUtc(month);
+
+      const [groups, categories, transactions, targets, recurring, userDoc] =
+        await Promise.all([
+          BudgetCategoryGroupModel.find({ userId })
+            .sort({ order: 1, createdAt: 1 })
+            .lean(),
+          BudgetCategoryModel.find({ userId })
+            .sort({ groupId: 1, order: 1 })
+            .lean(),
+          BudgetTransactionModel.find({
+            userId,
+            date: { $gte: start, $lt: endExclusive },
+          }).lean(),
+          BudgetTargetModel.find({ userId, month }).lean(),
+          BudgetRecurringTemplateModel.find({ userId, active: true }).lean(),
+          UserModel.findById(userId).select('currency').lean(),
+        ]);
+
+      const rows = buildReportRows({
+        groups: groups as never,
+        categories: categories as never,
+        transactions: transactions as never,
+        targets: targets as never,
+      });
+      const totals = totalsFromRows(rows);
+      const targetTotals = targetTotalsFromRows(rows);
+      const currency = (userDoc?.currency as string | undefined) ?? 'INR';
+
+      const expenseGroups = rows.filter((r) => r.kind === 'expense');
+      const narrative = generateNarrative({
+        month,
+        currency: currency as never,
+        expenseActual: totals.expense,
+        expenseTarget: targetTotals.expense,
+        hasAnyTarget: targets.length > 0,
+        hasAnyTransaction: transactions.length > 0,
+        expenseGroups,
+      });
+
+      const recurringDue = recurring
+        .filter((r) => r.lastRunMonth !== month)
+        .map((r) => ({
+          templateId: String(r._id),
+          label: r.label,
+          amount: r.amount,
+          dayOfMonth: r.dayOfMonth,
+        }));
+
+      return {
+        month,
+        currency,
+        totals,
+        targetTotals,
+        groups: rows,
+        narrative,
+        recurringDue,
+      };
     }
   );
 }
