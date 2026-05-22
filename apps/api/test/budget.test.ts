@@ -65,4 +65,33 @@ describe('Budget routes (smoke — no session)', () => {
     });
     expect(res.statusCode).toBe(401);
   });
+
+  it('GET /api/budget/transactions returns 401', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/budget/transactions?month=2026-05',
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('POST /api/budget/transactions returns 401', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/budget/transactions',
+      payload: {
+        date: '2026-05-22T10:00:00Z',
+        categoryId: '507f1f77bcf86cd799439011',
+        amount: 50_000,
+      },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('DELETE /api/budget/transactions/:id returns 401', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/budget/transactions/507f1f77bcf86cd799439011',
+    });
+    expect(res.statusCode).toBe(401);
+  });
 });

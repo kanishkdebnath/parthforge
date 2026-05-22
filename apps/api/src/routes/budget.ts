@@ -6,16 +6,22 @@ import {
   UpdateBudgetGroupRequestSchema,
   CreateBudgetCategoryRequestSchema,
   UpdateBudgetCategoryRequestSchema,
+  CreateBudgetTransactionRequestSchema,
+  UpdateBudgetTransactionRequestSchema,
   BudgetReorderRequestSchema,
   CategoryKindSchema,
+  MonthStringSchema,
 } from '@pathforge/shared';
 import { BudgetCategoryGroupModel } from '../models/BudgetCategoryGroup.js';
 import { BudgetCategoryModel } from '../models/BudgetCategory.js';
+import { BudgetTransactionModel } from '../models/BudgetTransaction.js';
 import {
   defaultGroupsSeed,
   defaultCategoriesSeed,
   serializeBudgetGroup,
   serializeBudgetCategory,
+  serializeBudgetTransaction,
+  monthRangeUtc,
 } from '../lib/budget-helpers.js';
 import { validateReorderIds } from '../lib/reorder.js';
 
@@ -422,6 +428,118 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
       return serializeBudgetCategory(doc as never);
     }
   );
+
+  // ---- Transaction routes ----
+
+  // GET /api/budget/transactions?month=YYYY-MM
+  app.get(
+    '/api/budget/transactions',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const QuerySchema = z.object({
+        month: MonthStringSchema.optional(),
+      });
+      const parsed = QuerySchema.safeParse(request.query);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+      const month = parsed.data.month ?? defaultCurrentMonth();
+      const { start, endExclusive } = monthRangeUtc(month);
+      const docs = await BudgetTransactionModel.find({
+        userId,
+        date: { $gte: start, $lt: endExclusive },
+      })
+        .sort({ date: -1, createdAt: -1 })
+        .lean();
+      return docs.map((d) => serializeBudgetTransaction(d as never));
+    }
+  );
+
+  // POST /api/budget/transactions
+  app.post(
+    '/api/budget/transactions',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = CreateBudgetTransactionRequestSchema.safeParse(request.body);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+
+      const categoryExists = await BudgetCategoryModel.exists({
+        _id: parsed.data.categoryId,
+        userId,
+      });
+      if (!categoryExists) {
+        return reply.code(400).send({ error: 'invalid_category' });
+      }
+
+      const doc = await BudgetTransactionModel.create({
+        userId: new Types.ObjectId(userId),
+        date: parsed.data.date,
+        categoryId: new Types.ObjectId(parsed.data.categoryId),
+        amount: parsed.data.amount,
+        description: parsed.data.description,
+      });
+      return reply
+        .code(201)
+        .send(serializeBudgetTransaction(doc.toObject() as never));
+    }
+  );
+
+  // PATCH /api/budget/transactions/:id
+  app.patch(
+    '/api/budget/transactions/:id',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isObjectId(id)) return reply.code(400).send({ error: 'Invalid id' });
+      const parsed = UpdateBudgetTransactionRequestSchema.safeParse(request.body);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+
+      if (parsed.data.categoryId) {
+        const categoryExists = await BudgetCategoryModel.exists({
+          _id: parsed.data.categoryId,
+          userId,
+        });
+        if (!categoryExists) {
+          return reply.code(400).send({ error: 'invalid_category' });
+        }
+      }
+
+      const $set: Record<string, unknown> = {};
+      const $unset: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(parsed.data)) {
+        if (v === null) $unset[k] = '';
+        else if (v !== undefined) $set[k] = v;
+      }
+      const update: Record<string, unknown> = {};
+      if (Object.keys($set).length) update.$set = $set;
+      if (Object.keys($unset).length) update.$unset = $unset;
+
+      const doc = await BudgetTransactionModel.findOneAndUpdate(
+        { _id: id, userId },
+        update,
+        { new: true }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeBudgetTransaction(doc as never);
+    }
+  );
+
+  // DELETE /api/budget/transactions/:id  → hard delete (transactions aren't soft-deleted)
+  app.delete(
+    '/api/budget/transactions/:id',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isObjectId(id)) return reply.code(400).send({ error: 'Invalid id' });
+      const doc = await BudgetTransactionModel.findOneAndDelete({
+        _id: id,
+        userId: request.user!._id,
+      }).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return { ok: true };
+    }
+  );
 }
 
 // ---- local helpers ----
@@ -437,4 +555,11 @@ function isDuplicateKey(err: unknown): boolean {
     'code' in err &&
     (err as { code: unknown }).code === 11000
   );
+}
+
+function defaultCurrentMonth(): string {
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const m = String(now.getUTCMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
 }
