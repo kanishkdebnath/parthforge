@@ -35,4 +35,34 @@ describe('Budget routes (smoke — no session)', () => {
     });
     expect(res.statusCode).toBe(401);
   });
+
+  it('GET /api/budget/categories returns 401', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/budget/categories' });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('POST /api/budget/categories returns 401', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/budget/categories',
+      payload: {
+        groupId: '507f1f77bcf86cd799439011',
+        name: 'Rent',
+        kind: 'expense',
+      },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('PATCH /api/budget/categories/reorder returns 401', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/budget/categories/reorder',
+      payload: {
+        groupId: '507f1f77bcf86cd799439011',
+        ids: ['507f1f77bcf86cd799439012'],
+      },
+    });
+    expect(res.statusCode).toBe(401);
+  });
 });

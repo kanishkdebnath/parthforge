@@ -4,7 +4,10 @@ import { z } from 'zod';
 import {
   CreateBudgetGroupRequestSchema,
   UpdateBudgetGroupRequestSchema,
+  CreateBudgetCategoryRequestSchema,
+  UpdateBudgetCategoryRequestSchema,
   BudgetReorderRequestSchema,
+  CategoryKindSchema,
 } from '@pathforge/shared';
 import { BudgetCategoryGroupModel } from '../models/BudgetCategoryGroup.js';
 import { BudgetCategoryModel } from '../models/BudgetCategory.js';
@@ -12,6 +15,7 @@ import {
   defaultGroupsSeed,
   defaultCategoriesSeed,
   serializeBudgetGroup,
+  serializeBudgetCategory,
 } from '../lib/budget-helpers.js';
 import { validateReorderIds } from '../lib/reorder.js';
 
@@ -216,7 +220,7 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(409).send({
           error: 'group_has_active_categories',
           message:
-            'Move or archive this group’s categories before archiving the group.',
+            "Move or archive this group's categories before archiving the group.",
         });
       }
 
@@ -227,6 +231,195 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
       ).lean();
       if (!doc) return reply.code(404).send({ error: 'Not found' });
       return serializeBudgetGroup(doc as never);
+    }
+  );
+
+  // ---- Category routes ----
+
+  // GET /api/budget/categories?groupId=&kind=
+  app.get(
+    '/api/budget/categories',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const QuerySchema = z.object({
+        groupId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
+        kind: CategoryKindSchema.optional(),
+      });
+      const parsed = QuerySchema.safeParse(request.query);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+      const filter: Record<string, unknown> = { userId };
+      if (parsed.data.groupId) filter.groupId = parsed.data.groupId;
+      if (parsed.data.kind) filter.kind = parsed.data.kind;
+      const docs = await BudgetCategoryModel.find(filter)
+        .sort({ groupId: 1, order: 1, createdAt: 1 })
+        .lean();
+      return docs.map((d) => serializeBudgetCategory(d as never));
+    }
+  );
+
+  // POST /api/budget/categories
+  app.post(
+    '/api/budget/categories',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const parsed = CreateBudgetCategoryRequestSchema.safeParse(request.body);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+
+      // Group must exist and belong to user.
+      const groupExists = await BudgetCategoryGroupModel.exists({
+        _id: parsed.data.groupId,
+        userId,
+      });
+      if (!groupExists) {
+        return reply.code(400).send({ error: 'invalid_group' });
+      }
+
+      const maxOrder = await BudgetCategoryModel.find({
+        userId,
+        groupId: parsed.data.groupId,
+      })
+        .sort({ order: -1 })
+        .limit(1)
+        .lean();
+      const order = (maxOrder[0]?.order ?? -1) + 1;
+
+      try {
+        const doc = await BudgetCategoryModel.create({
+          userId: new Types.ObjectId(userId),
+          groupId: new Types.ObjectId(parsed.data.groupId),
+          name: parsed.data.name,
+          kind: parsed.data.kind,
+          color: parsed.data.color,
+          order,
+        });
+        return reply
+          .code(201)
+          .send(serializeBudgetCategory(doc.toObject() as never));
+      } catch (err) {
+        if (isDuplicateKey(err)) {
+          return reply.code(409).send({
+            error: 'duplicate_name',
+            message: 'A category with this name already exists.',
+          });
+        }
+        throw err;
+      }
+    }
+  );
+
+  // PATCH /api/budget/categories/reorder — within-group reorder.
+  // Registered before PATCH /:id so the static route wins.
+  app.patch(
+    '/api/budget/categories/reorder',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const BodySchema = z.object({
+        groupId: z.string().regex(/^[a-f\d]{24}$/i),
+        ids: z.array(z.string().regex(/^[a-f\d]{24}$/i)).min(1),
+      });
+      const parsed = BodySchema.safeParse(request.body);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+
+      // Reorder operates on live categories only — the UI doesn't surface
+      // archived items, so a UI-driven reorder set won't include them.
+      const existing = await BudgetCategoryModel.find({
+        userId,
+        groupId: parsed.data.groupId,
+        archived: false,
+      })
+        .select('_id')
+        .lean();
+      const err = validateReorderIds(
+        existing.map((d) => String(d._id)),
+        parsed.data.ids
+      );
+      if (err) return reply.code(400).send({ error: err });
+
+      await Promise.all(
+        parsed.data.ids.map((id, idx) =>
+          BudgetCategoryModel.updateOne(
+            { _id: id, userId, groupId: parsed.data.groupId },
+            { $set: { order: idx } }
+          )
+        )
+      );
+
+      const docs = await BudgetCategoryModel.find({
+        userId,
+        groupId: parsed.data.groupId,
+        archived: false,
+      })
+        .sort({ order: 1, createdAt: 1 })
+        .lean();
+      return docs.map((d) => serializeBudgetCategory(d as never));
+    }
+  );
+
+  // PATCH /api/budget/categories/:id
+  app.patch(
+    '/api/budget/categories/:id',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isObjectId(id)) return reply.code(400).send({ error: 'Invalid id' });
+      const parsed = UpdateBudgetCategoryRequestSchema.safeParse(request.body);
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const userId = request.user!._id;
+
+      if (parsed.data.groupId) {
+        const groupExists = await BudgetCategoryGroupModel.exists({
+          _id: parsed.data.groupId,
+          userId,
+        });
+        if (!groupExists) {
+          return reply.code(400).send({ error: 'invalid_group' });
+        }
+      }
+
+      const $set: Record<string, unknown> = {};
+      const $unset: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(parsed.data)) {
+        if (v === null) $unset[k] = '';
+        else if (v !== undefined) $set[k] = v;
+      }
+      const update: Record<string, unknown> = {};
+      if (Object.keys($set).length) update.$set = $set;
+      if (Object.keys($unset).length) update.$unset = $unset;
+
+      try {
+        const doc = await BudgetCategoryModel.findOneAndUpdate(
+          { _id: id, userId },
+          update,
+          { new: true }
+        ).lean();
+        if (!doc) return reply.code(404).send({ error: 'Not found' });
+        return serializeBudgetCategory(doc as never);
+      } catch (err) {
+        if (isDuplicateKey(err)) {
+          return reply.code(409).send({ error: 'duplicate_name' });
+        }
+        throw err;
+      }
+    }
+  );
+
+  // DELETE /api/budget/categories/:id  → archive only (history preservation)
+  app.delete(
+    '/api/budget/categories/:id',
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (!isObjectId(id)) return reply.code(400).send({ error: 'Invalid id' });
+      const doc = await BudgetCategoryModel.findOneAndUpdate(
+        { _id: id, userId: request.user!._id },
+        { $set: { archived: true } },
+        { new: true }
+      ).lean();
+      if (!doc) return reply.code(404).send({ error: 'Not found' });
+      return serializeBudgetCategory(doc as never);
     }
   );
 }
