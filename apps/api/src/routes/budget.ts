@@ -726,8 +726,16 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
   );
 
   // POST /api/budget/recurring/:id/apply
-  // Inactive: 409 'template_inactive'. Re-apply within same month: 409
-  // 'already_applied' with the existing lastRunMonth.
+  // 404 if template doesn't exist or doesn't belong to user.
+  // 409 'template_inactive' if !active. 409 'already_applied' if
+  // lastRunMonth === currentMonth.
+  //
+  // Race-safe: the lastRunMonth flip happens atomically via
+  // findOneAndUpdate with `lastRunMonth: { $ne: month }` in the filter.
+  // Only the request that actually claims the month proceeds to create
+  // the transaction; simultaneous duplicate applies fall through to the
+  // 409 branch. If the subsequent transaction insert fails, the
+  // lastRunMonth flip is rolled back so the user can retry.
   app.post(
     '/api/budget/recurring/:id/apply',
     { preHandler: [app.authenticate] },
@@ -735,21 +743,37 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
       const { id } = request.params as { id: string };
       if (!isObjectId(id)) return reply.code(400).send({ error: 'Invalid id' });
       const userId = request.user!._id;
-
-      const tmpl = await BudgetRecurringTemplateModel.findOne({
-        _id: id,
-        userId,
-      });
-      if (!tmpl) return reply.code(404).send({ error: 'Not found' });
-      if (!tmpl.active) {
-        return reply.code(409).send({ error: 'template_inactive' });
-      }
-
       const month = defaultCurrentMonth();
-      if (tmpl.lastRunMonth === month) {
+
+      // Atomic claim: only the request that flips lastRunMonth wins.
+      // `{ $ne: month }` matches docs whose field is missing or has a
+      // different value — both are valid "not yet applied" states.
+      const claimed = await BudgetRecurringTemplateModel.findOneAndUpdate(
+        {
+          _id: id,
+          userId,
+          active: true,
+          lastRunMonth: { $ne: month },
+        },
+        { $set: { lastRunMonth: month } },
+        { new: false } // return the pre-update doc so we have the prior lastRunMonth for rollback
+      );
+
+      if (!claimed) {
+        // The atomic filter didn't match. Disambiguate the failure mode
+        // so the client gets a useful 404 or 409.
+        const existing = await BudgetRecurringTemplateModel.findOne({
+          _id: id,
+          userId,
+        }).lean();
+        if (!existing) return reply.code(404).send({ error: 'Not found' });
+        if (!existing.active) {
+          return reply.code(409).send({ error: 'template_inactive' });
+        }
+        // active && lastRunMonth === month
         return reply.code(409).send({
           error: 'already_applied',
-          lastRunMonth: tmpl.lastRunMonth,
+          lastRunMonth: existing.lastRunMonth,
         });
       }
 
@@ -758,23 +782,32 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
       const parts = month.split('-');
       const y = Number(parts[0]!);
       const m = Number(parts[1]!);
-      const date = new Date(Date.UTC(y, m - 1, tmpl.dayOfMonth, 9, 0, 0, 0));
+      const date = new Date(Date.UTC(y, m - 1, claimed.dayOfMonth, 9, 0, 0, 0));
 
-      const txn = await BudgetTransactionModel.create({
-        userId: new Types.ObjectId(userId),
-        date,
-        categoryId: tmpl.categoryId,
-        amount: tmpl.amount,
-        description: tmpl.label,
-        recurringTemplateId: tmpl._id,
-      });
-
-      tmpl.lastRunMonth = month;
-      await tmpl.save();
-
-      return reply
-        .code(201)
-        .send(serializeBudgetTransaction(txn.toObject() as never));
+      try {
+        const txn = await BudgetTransactionModel.create({
+          userId: new Types.ObjectId(userId),
+          date,
+          categoryId: claimed.categoryId,
+          amount: claimed.amount,
+          description: claimed.label,
+          recurringTemplateId: claimed._id,
+        });
+        return reply
+          .code(201)
+          .send(serializeBudgetTransaction(txn.toObject() as never));
+      } catch (err) {
+        // Roll back the lastRunMonth flip so a retry can succeed.
+        // Restore the prior value, or unset if it was missing.
+        const rollback = claimed.lastRunMonth
+          ? { $set: { lastRunMonth: claimed.lastRunMonth } }
+          : { $unset: { lastRunMonth: '' } };
+        await BudgetRecurringTemplateModel.updateOne(
+          { _id: id, userId },
+          rollback
+        );
+        throw err;
+      }
     }
   );
 
