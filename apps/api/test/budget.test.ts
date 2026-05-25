@@ -140,4 +140,89 @@ describe('Budget routes (smoke — no session)', () => {
     });
     expect(res.statusCode).toBe(401);
   });
+
+  // ---- :id PATCH/DELETE coverage (added 2026-05-26 to fill the symmetric gap) ----
+
+  it('PATCH /api/budget/groups/:id returns 401', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/budget/groups/507f1f77bcf86cd799439011',
+      payload: { name: 'Renamed' },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('DELETE /api/budget/groups/:id returns 401', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/budget/groups/507f1f77bcf86cd799439011',
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('PATCH /api/budget/categories/:id returns 401', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/budget/categories/507f1f77bcf86cd799439011',
+      payload: { name: 'Renamed' },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('DELETE /api/budget/categories/:id returns 401', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/budget/categories/507f1f77bcf86cd799439011',
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('PATCH /api/budget/transactions/:id returns 401', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/budget/transactions/507f1f77bcf86cd799439011',
+      payload: { amount: 100 },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('DELETE /api/budget/targets/:id returns 401', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/budget/targets/507f1f77bcf86cd799439011',
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('POST /api/budget/recurring returns 401', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/budget/recurring',
+      payload: {
+        label: 'Rent',
+        categoryId: '507f1f77bcf86cd799439011',
+        amount: 1_800_000,
+        cadence: 'monthly',
+        dayOfMonth: 1,
+      },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('PATCH /api/budget/recurring/:id returns 401', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/budget/recurring/507f1f77bcf86cd799439011',
+      payload: { active: false },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('DELETE /api/budget/recurring/:id returns 401', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/budget/recurring/507f1f77bcf86cd799439011',
+    });
+    expect(res.statusCode).toBe(401);
+  });
 });
