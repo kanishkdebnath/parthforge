@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import {
   useBudgetTargets,
   useBulkUpsertTargets,
+  useClearBudgetTargets,
 } from '@/hooks/useBudget';
 import { addMonths } from '@/lib/budget-month';
 import {
@@ -35,6 +36,7 @@ export function BudgetTargetsForm({ month, groups, categories, currency }: Props
   const { data: targets = [], isPending } = useBudgetTargets(month);
   const { data: prevTargets = [] } = useBudgetTargets(addMonths(month, -1));
   const upsert = useBulkUpsertTargets();
+  const clear = useClearBudgetTargets();
 
   const targetsByCategory = useMemo(() => {
     const map = new Map<string, BudgetTarget>();
@@ -107,14 +109,28 @@ export function BudgetTargetsForm({ month, groups, categories, currency }: Props
 
   async function onSave() {
     const items: Array<{ categoryId: string; amount: number }> = [];
+    const idsToClear: string[] = [];
     for (const c of liveCategories) {
       const d = draft[c._id] ?? '';
-      if (d.trim() === '') continue;
+      const existing = targetsByCategory.get(c._id);
+      if (d.trim() === '') {
+        // Empty input on a category that previously had a target → DELETE.
+        // The bulk PUT only upserts items passed; omitted ones survive.
+        if (existing) idsToClear.push(existing._id);
+        continue;
+      }
       const minor = parseMajorToMinor(d);
       if (minor === null) continue;
       items.push({ categoryId: c._id, amount: minor });
     }
-    await upsert.mutateAsync({ month, items });
+    // Upsert first so any kept-but-changed targets land before the clears
+    // resolve and the cache re-fetches.
+    if (items.length > 0) {
+      await upsert.mutateAsync({ month, items });
+    }
+    if (idsToClear.length > 0) {
+      await clear.mutateAsync({ ids: idsToClear, month });
+    }
   }
 
   if (isPending) {
@@ -181,8 +197,11 @@ export function BudgetTargetsForm({ month, groups, categories, currency }: Props
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={onSave} disabled={!dirty || upsert.isPending}>
-          {upsert.isPending ? 'Saving…' : 'Save targets'}
+        <Button
+          onClick={onSave}
+          disabled={!dirty || upsert.isPending || clear.isPending}
+        >
+          {upsert.isPending || clear.isPending ? 'Saving…' : 'Save targets'}
         </Button>
       </div>
     </div>
