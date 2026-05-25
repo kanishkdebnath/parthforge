@@ -75,7 +75,7 @@ describe('serializeJournalDay', () => {
       ],
     };
     const wire = serializeJournalDay(contaminated as never);
-    const ref = wire.references[0];
+    const ref = wire.references[0]!;
     expect(ref.type).toBe('roadmap');
     expect('milestoneId' in ref).toBe(false);
   });
