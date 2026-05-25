@@ -12,6 +12,12 @@ import RoadmapDetailPage from '@/pages/RoadmapDetailPage';
 import JobsListPage from '@/pages/JobsListPage';
 import JobDetailPage from '@/pages/JobDetailPage';
 import JournalPage from '@/pages/JournalPage';
+import BudgetPage from '@/pages/BudgetPage';
+import BudgetPlanPage from '@/pages/BudgetPlanPage';
+import BudgetReportPage from '@/pages/BudgetReportPage';
+import BudgetCategoriesPage from '@/pages/BudgetCategoriesPage';
+import BudgetRecurringPage from '@/pages/BudgetRecurringPage';
+import BudgetSettingsPage from '@/pages/BudgetSettingsPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (
@@ -36,6 +42,12 @@ export default function App() {
         <Route path="/jobs/archived" element={<Protected><JobsListPage archived /></Protected>} />
         <Route path="/jobs/:id" element={<Protected><JobDetailPage /></Protected>} />
         <Route path="/journal" element={<Protected><JournalPage /></Protected>} />
+        <Route path="/budget" element={<Protected><BudgetPage /></Protected>} />
+        <Route path="/budget/plan" element={<Protected><BudgetPlanPage /></Protected>} />
+        <Route path="/budget/report" element={<Protected><BudgetReportPage /></Protected>} />
+        <Route path="/budget/categories" element={<Protected><BudgetCategoriesPage /></Protected>} />
+        <Route path="/budget/recurring" element={<Protected><BudgetRecurringPage /></Protected>} />
+        <Route path="/budget/settings" element={<Protected><BudgetSettingsPage /></Protected>} />
         <Route path="*" element={<Protected><Dashboard /></Protected>} />
       </Routes>
       <TourPanel />
