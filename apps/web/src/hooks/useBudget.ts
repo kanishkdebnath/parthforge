@@ -337,6 +337,31 @@ export function useBulkUpsertTargets() {
   });
 }
 
+/**
+ * DELETEs a set of targets in parallel. Used by the plan page when the
+ * user clears a target input and saves — the bulk PUT endpoint upserts
+ * the items passed but doesn't remove omitted ones, so the cleared
+ * targets need a separate DELETE pass to actually disappear.
+ *
+ * Takes both the ids and the month so we can invalidate the right keys
+ * without an extra fetch.
+ */
+type ClearTargetsBody = { ids: string[]; month: string };
+
+export function useClearBudgetTargets() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids }: ClearTargetsBody): Promise<void> => {
+      await Promise.all(ids.map((id) => api.delete(`/budget/targets/${id}`)));
+    },
+    onSuccess: (_void, vars) => {
+      qc.invalidateQueries({ queryKey: TARGETS_KEY(vars.month) });
+      qc.invalidateQueries({ queryKey: REPORT_KEY(vars.month) });
+    },
+    onError: (err) => toastError('Could not clear targets', err),
+  });
+}
+
 // ---- Recurring ----
 
 export function useBudgetRecurring() {
