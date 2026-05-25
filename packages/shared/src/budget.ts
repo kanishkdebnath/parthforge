@@ -141,10 +141,9 @@ export const UpdateBudgetCategoryRequestSchema = z.object({
 });
 export type UpdateBudgetCategoryRequest = z.infer<typeof UpdateBudgetCategoryRequestSchema>;
 
-export const BudgetReorderRequestSchema = z.object({
-  ids: z.array(ObjectIdString).min(1),
-});
-export type BudgetReorderRequest = z.infer<typeof BudgetReorderRequestSchema>;
+// Reorder schema lives in `./reorder.ts` and is exported as
+// `ReorderIdsRequestSchema` — the per-feature `BudgetReorderRequestSchema`
+// alias was removed when a third caller appeared.
 
 export const CreateBudgetTransactionRequestSchema = z.object({
   date: z.coerce.date(),

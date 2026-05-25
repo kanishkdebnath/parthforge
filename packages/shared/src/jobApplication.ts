@@ -172,9 +172,6 @@ export const UpdateContactRequestSchema = z.object({
 });
 export type UpdateContactRequest = z.infer<typeof UpdateContactRequestSchema>;
 
-// Re-export the roadmap-style reorder shape locally so the routes file imports
-// from one place. Identical to ReorderRequestSchema in roadmap.ts.
-export const ReorderRoundsRequestSchema = z.object({
-  ids: z.array(ObjectIdString).min(1),
-});
-export type ReorderRoundsRequest = z.infer<typeof ReorderRoundsRequestSchema>;
+// Reorder schema lives in `./reorder.ts` and is exported as
+// `ReorderIdsRequestSchema` — the per-feature `ReorderRoundsRequestSchema`
+// alias was removed when a third caller appeared.
