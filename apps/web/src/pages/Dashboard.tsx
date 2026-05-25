@@ -2,6 +2,7 @@ import { useMe } from '@/hooks/useAuth';
 import { JournalTodayCard } from '@/components/journal/JournalTodayCard';
 import { RoadmapsWidget } from '@/components/dashboard/RoadmapsWidget';
 import { JobsWidget } from '@/components/dashboard/JobsWidget';
+import { BudgetWidget } from '@/components/dashboard/BudgetWidget';
 
 export default function Dashboard() {
   const { data: me } = useMe();
@@ -10,15 +11,16 @@ export default function Dashboard() {
       <div>
         <h1 className="text-2xl font-semibold">Welcome, {me?.name}.</h1>
         <p className="text-muted-foreground mt-2">
-          Today's pulse, plus your roadmaps and applications a click away.
+          Today's pulse, plus your roadmaps, budget, and applications a click away.
         </p>
       </div>
 
       <JournalTodayCard />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <RoadmapsWidget />
         <JobsWidget />
+        <BudgetWidget />
       </div>
     </main>
   );
