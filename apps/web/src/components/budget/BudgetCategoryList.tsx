@@ -28,6 +28,7 @@ import {
 } from '@/hooks/useBudget';
 import { BudgetCategoryDialog } from './BudgetCategoryDialog';
 import { BudgetDeleteCategoryConfirm } from './BudgetDeleteCategoryConfirm';
+import { BudgetEmptyHint } from './BudgetEmptyHint';
 
 interface Props {
   selectedGroup: BudgetCategoryGroup | null;
@@ -67,9 +68,14 @@ export function BudgetCategoryList({ selectedGroup, groups }: Props) {
 
   if (!selectedGroup) {
     return (
-      <div className="text-sm text-slate-500 dark:text-slate-400">
-        Pick a group on the left to see its categories.
-      </div>
+      <BudgetEmptyHint
+        heading={groups.length === 0 ? 'No groups yet' : 'Pick a group'}
+        hint={
+          groups.length === 0
+            ? 'Use + New on the left to create your first group.'
+            : 'Select one on the left to see its categories.'
+        }
+      />
     );
   }
 
@@ -90,9 +96,10 @@ export function BudgetCategoryList({ selectedGroup, groups }: Props) {
       </div>
 
       {liveInGroup.length === 0 ? (
-        <div className="text-sm text-slate-500 dark:text-slate-400 px-2 py-4">
-          No categories in this group yet.
-        </div>
+        <BudgetEmptyHint
+          heading="No categories in this group yet"
+          hint="Use + New above to add one."
+        />
       ) : (
         <DndContext
           sensors={sensors}
