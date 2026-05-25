@@ -52,6 +52,14 @@ export function parseMajorToMinor(input: string): number | null {
   return Math.round(major * 100);
 }
 
+/**
+ * Returns the display symbol for a currency code (e.g. 'INR' → '₹').
+ * Falls back to the code itself (with trailing space) for unknown codes.
+ */
+export function getCurrencySymbol(currency: string): string {
+  return CURRENCY_SYMBOL[currency] ?? `${currency} `;
+}
+
 /** Format an integer minor amount as a user-editable major-unit string (no symbol). e.g. 50_000 → "500" */
 export function formatMinorForInput(minor: number): string {
   const major = minor / 100;

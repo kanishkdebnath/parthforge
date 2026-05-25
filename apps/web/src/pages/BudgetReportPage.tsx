@@ -8,7 +8,7 @@ import { currentIsoMonth } from '@/lib/budget-month';
 
 export default function BudgetReportPage() {
   const [month, setMonth] = useState<string>(currentIsoMonth());
-  const { data: report, isPending } = useBudgetReport(month);
+  const { data: report, isPending, isError } = useBudgetReport(month);
 
   return (
     <main className="container py-10">
@@ -17,9 +17,11 @@ export default function BudgetReportPage() {
       <div className="flex items-center justify-between mb-4">
         <BudgetMonthSelector month={month} onChange={setMonth} />
       </div>
-      {isPending || !report ? (
+      {isPending ? (
         <p className="text-sm text-slate-500">Loading…</p>
-      ) : (
+      ) : isError ? (
+        <p className="text-sm text-red-600">Couldn't load report.</p>
+      ) : !report ? null : (
         <div className="space-y-6">
           <BudgetReportNarrative report={report} />
           <BudgetReportGroups report={report} />

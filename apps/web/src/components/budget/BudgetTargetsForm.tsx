@@ -14,6 +14,7 @@ import { addMonths } from '@/lib/budget-month';
 import {
   parseMajorToMinor,
   formatMinorForInput,
+  getCurrencySymbol,
 } from '@/lib/budget-formatting';
 
 interface Props {
@@ -160,7 +161,7 @@ export function BudgetTargetsForm({ month, groups, categories, currency }: Props
                       {c.name}
                     </span>
                     <div className="flex items-center gap-1.5 w-44">
-                      <span className="text-xs text-slate-500">{currencySymbol(currency)}</span>
+                      <span className="text-xs text-slate-500">{getCurrencySymbol(currency)}</span>
                       <Input
                         value={draft[c._id] ?? ''}
                         onChange={(e) =>
@@ -186,11 +187,4 @@ export function BudgetTargetsForm({ month, groups, categories, currency }: Props
       </div>
     </div>
   );
-}
-
-const SYMBOLS: Record<string, string> = {
-  INR: '₹', USD: '$', EUR: '€', GBP: '£', AUD: 'A$', CAD: 'C$', SGD: 'S$', JPY: '¥',
-};
-function currencySymbol(code: string): string {
-  return SYMBOLS[code] ?? code;
 }
