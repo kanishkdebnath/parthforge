@@ -5,7 +5,7 @@ import type {
   BudgetTarget,
 } from '@pathforge/shared';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { BudgetAmountInput } from './BudgetAmountInput';
 import {
   useBudgetTargets,
   useBulkUpsertTargets,
@@ -162,7 +162,7 @@ export function BudgetTargetsForm({ month, groups, categories, currency }: Props
                     </span>
                     <div className="flex items-center gap-1.5 w-44">
                       <span className="text-xs text-slate-500">{getCurrencySymbol(currency)}</span>
-                      <Input
+                      <BudgetAmountInput
                         value={draft[c._id] ?? ''}
                         onChange={(e) =>
                           setDraft((d) => ({ ...d, [c._id]: e.target.value }))
@@ -170,6 +170,7 @@ export function BudgetTargetsForm({ month, groups, categories, currency }: Props
                         placeholder="0"
                         inputMode="decimal"
                         className="text-right tabular-nums"
+                        currency={currency}
                       />
                     </div>
                   </div>

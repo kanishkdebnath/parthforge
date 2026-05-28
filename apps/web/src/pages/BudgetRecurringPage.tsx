@@ -46,6 +46,7 @@ export default function BudgetRecurringPage() {
         open={newOpen}
         onOpenChange={setNewOpen}
         categories={categories}
+        currency={currency}
       />
     </main>
   );

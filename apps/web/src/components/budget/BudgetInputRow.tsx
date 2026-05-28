@@ -14,9 +14,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { parseMajorToMinor, formatMinorForInput } from '@/lib/budget-formatting';
+import { BudgetAmountInput } from './BudgetAmountInput';
 
 interface Props {
   categories: BudgetCategory[];
+  /** ISO currency code for the calculator preview symbol. */
+  currency: string;
   /** When set, the row is in edit mode for this transaction. */
   initial?: BudgetTransaction;
   /** Called on Add / Save. Returns the body to send. Throw to keep the form open. */
@@ -35,6 +38,7 @@ interface Props {
 
 export function BudgetInputRow({
   categories,
+  currency,
   initial,
   onSave,
   onCancel,
@@ -148,7 +152,7 @@ export function BudgetInputRow({
           <label className="block text-[10px] uppercase tracking-wide text-slate-500 mb-1">
             Amount
           </label>
-          <Input
+          <BudgetAmountInput
             ref={amountRef}
             value={amountText}
             onChange={(e) => setAmountText(e.target.value)}
@@ -156,6 +160,7 @@ export function BudgetInputRow({
             placeholder="0"
             inputMode="decimal"
             className="text-lg tabular-nums"
+            currency={currency}
           />
         </div>
         <div className="flex gap-1.5 self-end pb-px">
