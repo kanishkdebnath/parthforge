@@ -30,6 +30,7 @@ import {
   parseMajorToMinor,
   formatMinorForInput,
 } from '@/lib/budget-formatting';
+import { BudgetAmountInput } from './BudgetAmountInput';
 
 const Schema = z.object({
   label: z.string().min(1, 'Required').max(120),
@@ -44,6 +45,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: BudgetCategory[];
+  currency: string;
   template?: BudgetRecurringTemplate;
 }
 
@@ -51,6 +53,7 @@ export function BudgetRecurringFormDialog({
   open,
   onOpenChange,
   categories,
+  currency,
   template,
 }: Props) {
   const create = useCreateBudgetRecurring();
@@ -137,7 +140,13 @@ export function BudgetRecurringFormDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Amount</label>
-              <Input {...form.register('amountText')} placeholder="0" inputMode="decimal" />
+              <BudgetAmountInput
+                value={form.watch('amountText')}
+                onChange={(e) => form.setValue('amountText', e.target.value, { shouldValidate: true })}
+                placeholder="0"
+                inputMode="decimal"
+                currency={currency}
+              />
               {form.formState.errors.amountText && (
                 <p className="text-xs text-red-600">{form.formState.errors.amountText.message}</p>
               )}

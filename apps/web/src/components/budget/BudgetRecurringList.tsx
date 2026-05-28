@@ -57,6 +57,7 @@ export function BudgetRecurringList({ templates, categories, currency }: Props) 
         open={!!editing}
         onOpenChange={(open) => !open && setEditing(undefined)}
         categories={categories}
+        currency={currency}
         template={editing}
       />
     </>

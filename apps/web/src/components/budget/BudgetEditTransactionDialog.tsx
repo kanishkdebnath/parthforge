@@ -14,12 +14,14 @@ import { useUpdateBudgetTransaction } from '@/hooks/useBudget';
 interface Props {
   transaction: BudgetTransaction | null;
   categories: BudgetCategory[];
+  currency: string;
   onClose: () => void;
 }
 
 export function BudgetEditTransactionDialog({
   transaction,
   categories,
+  currency,
   onClose,
 }: Props) {
   const update = useUpdateBudgetTransaction(transaction?._id ?? '');
@@ -34,6 +36,7 @@ export function BudgetEditTransactionDialog({
         </DialogHeader>
         <BudgetInputRow
           categories={categories}
+          currency={currency}
           initial={transaction}
           compact
           onSave={async (body) => {

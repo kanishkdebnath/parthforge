@@ -79,6 +79,7 @@ export default function BudgetPage() {
       <div className="space-y-4 mb-6">
         <BudgetInputRow
           categories={categories}
+          currency={currency}
           onSave={handleAdd}
         />
         <BudgetNetBand income={income} expense={expense} net={net} currency={currency} />
@@ -110,6 +111,7 @@ export default function BudgetPage() {
       <BudgetEditTransactionDialog
         transaction={editing}
         categories={categories}
+        currency={currency}
         onClose={() => setEditing(null)}
       />
     </main>

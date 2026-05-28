@@ -13,6 +13,7 @@ import {
   useBudgetReport,
   useCreateBudgetTransaction,
 } from '@/hooks/useBudget';
+import { useMe } from '@/hooks/useAuth';
 import { formatMoney } from '@/lib/budget-formatting';
 import { currentIsoMonth, formatMonthLabel } from '@/lib/budget-month';
 
@@ -21,6 +22,8 @@ export function BudgetWidget() {
   const month = currentIsoMonth();
   const { data: report, isLoading, isError } = useBudgetReport(month);
   const { data: categories = [] } = useBudgetCategories();
+  const { data: me } = useMe();
+  const currency = me?.currency ?? 'INR';
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const create = useCreateBudgetTransaction();
 
@@ -49,6 +52,7 @@ export function BudgetWidget() {
           </DialogHeader>
           <BudgetInputRow
             categories={categories}
+            currency={currency}
             compact
             onSave={async (body) => {
               await create.mutateAsync(body);
