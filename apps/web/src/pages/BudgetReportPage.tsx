@@ -7,13 +7,13 @@ import { BudgetExportMenu } from '@/components/budget/BudgetExportMenu';
 import {
   useBudgetCategories,
   useBudgetGroups,
-  useBudgetRecurring,
   useBudgetReport,
   useBudgetTargets,
   useBudgetTransactions,
 } from '@/hooks/useBudget';
 import { currentIsoMonth } from '@/lib/budget-month';
 import type { BudgetExportInput } from '@/lib/budget-export';
+import type { CategoryKind } from '@pathforge/shared';
 
 function monthLabel(month: string): string {
   const parts = month.split('-').map(Number);
@@ -30,18 +30,16 @@ export default function BudgetReportPage() {
   const targetsQ = useBudgetTargets(month);
   const groupsQ = useBudgetGroups();
   const categoriesQ = useBudgetCategories();
-  const recurringQ = useBudgetRecurring();
-
   const allReady =
     reportQ.isSuccess &&
     transactionsQ.isSuccess &&
     targetsQ.isSuccess &&
     groupsQ.isSuccess &&
-    categoriesQ.isSuccess &&
-    recurringQ.isSuccess;
+    categoriesQ.isSuccess;
 
   const exportInput: BudgetExportInput | null = useMemo(() => {
     if (!allReady) return null;
+    const DEFAULT_KIND: CategoryKind = 'expense';
     const report = reportQ.data!;
     const groupsById = new Map(groupsQ.data!.map((g) => [g._id, g]));
     const catsById = new Map(categoriesQ.data!.map((c) => [c._id, c]));
@@ -53,7 +51,7 @@ export default function BudgetReportPage() {
         date: new Date(tx.date).toISOString().slice(0, 10),
         groupName: grp?.name ?? '(unknown group)',
         categoryName: cat?.name ?? '(unknown category)',
-        kind: (cat?.kind ?? 'expense') as 'income' | 'expense',
+        kind: cat?.kind ?? DEFAULT_KIND,
         amount: tx.amount,
         description: tx.description ?? '',
       };
@@ -72,7 +70,7 @@ export default function BudgetReportPage() {
       const grp = cat ? groupsById.get(cat.groupId) : undefined;
       const rc = reportCatById.get(t.categoryId);
       const actual = rc?.actual ?? 0;
-      const kind = (rc?.kind ?? cat?.kind ?? 'expense') as 'income' | 'expense';
+      const kind: CategoryKind = rc?.kind ?? cat?.kind ?? DEFAULT_KIND;
       return {
         groupName: grp?.name ?? '(unknown group)',
         categoryName: cat?.name ?? '(unknown category)',
@@ -129,7 +127,6 @@ export default function BudgetReportPage() {
     targetsQ.data,
     groupsQ.data,
     categoriesQ.data,
-    recurringQ.data,
   ]);
 
   return (
