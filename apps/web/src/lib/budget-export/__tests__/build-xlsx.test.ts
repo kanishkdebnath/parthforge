@@ -72,3 +72,12 @@ describe('buildXlsx — Transactions sheet', () => {
     expect(netRow.getCell(5).formula).toBe('E7-E8');
   });
 });
+
+describe('buildXlsx — empty month', () => {
+  it('shows a caption and omits the summary block when there are no transactions', async () => {
+    const wb = await loadWorkbook(makeInput({ transactions: [] }));
+    const ws = wb.getWorksheet('Transactions')!;
+    expect(ws.getCell('A3').value).toBe('No transactions in this month.');
+    expect(ws.getCell('A7').value).toBe(null);
+  });
+});
