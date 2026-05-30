@@ -1,13 +1,15 @@
 import { jsPDF } from 'jspdf';
-import _autoTable from 'jspdf-autotable';
+import _autoTable, { type CellHookData } from 'jspdf-autotable';
 import { formatMoney } from '../budget-formatting';
 import { formatSignedMoney } from './format';
 import type { BudgetExportInput } from './types';
 
-// Handle CJS/ESM interop: jspdf-autotable may export the function as .default
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const autoTable: (doc: jsPDF, opts: any) => void =
-  (typeof _autoTable === 'function' ? _autoTable : (_autoTable as any).default) as (doc: jsPDF, opts: any) => void;
+// jspdf-autotable v3.x can resolve as either a function (ESM) or an object with `default` (CJS interop).
+// Cover both so the same code works in Vitest (Node) and the Vite browser bundle.
+const autoTable: typeof _autoTable =
+  typeof _autoTable === 'function'
+    ? _autoTable
+    : (_autoTable as unknown as { default: typeof _autoTable }).default;
 
 const PAGE_MARGIN = 40;
 
@@ -120,8 +122,7 @@ function drawGroupTables(doc: jsPDF, input: BudgetExportInput, topY: number): nu
         2: { cellWidth: 80, halign: 'right' },
         3: { cellWidth: 80, halign: 'right' },
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      didParseCell: (data: any) => {
+      didParseCell: (data: CellHookData) => {
         if (data.section === 'body' && data.column.index === 3) {
           const raw = String(data.cell.raw ?? '');
           if (raw.startsWith('−')) data.cell.styles.textColor = [220, 38, 38];
