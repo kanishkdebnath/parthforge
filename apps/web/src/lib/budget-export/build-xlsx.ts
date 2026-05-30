@@ -6,6 +6,7 @@ const TX_HEADERS = ['Date', 'Group', 'Category', 'Kind', 'Amount', 'Description'
 const TX_WIDTHS = [12, 20, 24, 10, 14, 40];
 
 const TARGET_HEADERS = ['Group', 'Category', 'Kind', 'Target', 'Actual', 'Delta'] as const;
+// 7 entries: column A reserved for summary row labels ("Income totals" / "Expense totals"); columns B–G hold the 6 headers.
 const TARGET_WIDTHS = [14, 20, 24, 10, 14, 14, 14];
 
 const RECURRING_HEADERS = ['Label', 'Day of Month', 'Amount', 'Applied?'] as const;
@@ -124,7 +125,6 @@ function buildTargetsSheet(ws: ExcelJS.Worksheet, input: BudgetExportInput): voi
   function writeSummary(rowIdx: number, label: string, subset: ExportTargetRow[]): void {
     const r = ws.getRow(rowIdx);
     r.getCell(1).value = label;
-    r.getCell(1).font = { bold: true };
     r.getCell(5).value = minorToMajor(subset.reduce((s, t) => s + t.target, 0)); // E
     r.getCell(5).numFmt = fmt;
     r.getCell(6).value = minorToMajor(subset.reduce((s, t) => s + t.actual, 0)); // F
@@ -164,6 +164,7 @@ export async function buildXlsx(input: BudgetExportInput): Promise<ArrayBuffer> 
   buildTargetsSheet(wb.addWorksheet('Targets'), input);
   buildRecurringSheet(wb.addWorksheet('Recurring'), input);
 
+  // exceljs returns Buffer in Node, ArrayBuffer in the browser. We always run this in the Vite browser bundle (lazy-imported by the export menu), so the cast is safe.
   const buffer = await wb.xlsx.writeBuffer();
   return buffer as ArrayBuffer;
 }

@@ -124,6 +124,21 @@ describe('buildXlsx — Targets sheet', () => {
     expect(ws.getCell('F8').value).toBe(600);
     expect(ws.getCell('G8').value).toBe(100);
   });
+
+  it('skips summary rows when every target row is filtered out', async () => {
+    const wb = await loadWorkbook(
+      makeInput({
+        targets: [
+          { groupName: 'Food', categoryName: 'Groceries', kind: 'expense', target: 0, actual: 0, delta: 0 },
+        ],
+      })
+    );
+    const ws = wb.getWorksheet('Targets')!;
+    // No data rows and no summary rows
+    expect(ws.getCell('B3').value).toBe(null);
+    expect(ws.getCell('A4').value).toBe(null);
+    expect(ws.getCell('A5').value).toBe(null);
+  });
 });
 
 describe('buildXlsx — Recurring sheet', () => {
@@ -147,5 +162,13 @@ describe('buildXlsx — Recurring sheet', () => {
     expect(ws.getCell('D3').value).toBe('No');
     expect(ws.getCell('A4').value).toBe('Internet');
     expect(ws.getCell('D4').value).toBe('Yes');
+  });
+
+  it('renders header only with no data rows when recurring list is empty', async () => {
+    const wb = await loadWorkbook(makeInput({ recurring: [] }));
+    const ws = wb.getWorksheet('Recurring')!;
+    expect(ws.getCell('A1').value).toBe('Currency: INR');
+    expect(ws.getCell('A2').value).toBe('Label');
+    expect(ws.getCell('A3').value).toBe(null);
   });
 });
