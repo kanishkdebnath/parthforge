@@ -25,3 +25,22 @@ describe('buildPdf — smoke', () => {
     expect(text).toContain('Pathforge Budget');
   });
 });
+
+describe('buildPdf — summary and narrative', () => {
+  it('renders the income/expense/net summary labels', async () => {
+    const text = await pdfText();
+    expect(text).toContain('Income');
+    expect(text).toContain('Expense');
+    expect(text).toContain('Net');
+  });
+
+  it('renders the narrative text when non-empty', async () => {
+    const text = await pdfText();
+    expect(text).toContain('Income came in below target.');
+  });
+
+  it('skips narrative when empty', async () => {
+    const text = await pdfText(makeInput({ report: { ...makeInput().report, narrative: '' } }));
+    expect(text).not.toContain('Income came in below target.');
+  });
+});
