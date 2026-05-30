@@ -170,7 +170,8 @@ function drawRecurring(doc: jsPDF, input: BudgetExportInput, topY: number): numb
 function drawFooters(doc: jsPDF): void {
   const total = doc.getNumberOfPages();
   const now = new Date();
-  const stamp = `Generated ${now.toISOString().slice(0, 16).replace('T', ' ')}`;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const stamp = `Generated ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
   for (let i = 1; i <= total; i++) {
     doc.setPage(i);
     doc.setFontSize(8);

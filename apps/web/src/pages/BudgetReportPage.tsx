@@ -129,13 +129,25 @@ export default function BudgetReportPage() {
     categoriesQ.data,
   ]);
 
+  const anyErrored =
+    reportQ.isError ||
+    transactionsQ.isError ||
+    targetsQ.isError ||
+    groupsQ.isError ||
+    categoriesQ.isError;
+  const disabledReason = !allReady
+    ? anyErrored
+      ? 'Report data failed to load'
+      : 'Report data not loaded'
+    : undefined;
+
   return (
     <main className="container py-10">
       <h1 className="text-2xl font-semibold tracking-tight mb-6">Budget</h1>
       <BudgetTabStrip />
       <div className="flex items-center justify-between mb-4">
         <BudgetMonthSelector month={month} onChange={setMonth} />
-        <BudgetExportMenu input={exportInput} />
+        <BudgetExportMenu input={exportInput} disabledReason={disabledReason} />
       </div>
       {reportQ.isPending ? (
         <p className="text-sm text-slate-500">Loading…</p>

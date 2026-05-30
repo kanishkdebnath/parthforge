@@ -18,9 +18,10 @@ type State = 'idle' | 'preparing' | 'done';
 
 interface Props {
   input: BudgetExportInput | null;  // null until all queries have resolved
+  disabledReason?: string;          // shown via title attribute when input is null
 }
 
-export function BudgetExportMenu({ input }: Props) {
+export function BudgetExportMenu({ input, disabledReason }: Props) {
   const [state, setState] = useState<State>('idle');
   const ready = input !== null;
   const disabled = !ready || state === 'preparing';
@@ -47,7 +48,12 @@ export function BudgetExportMenu({ input }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={disabled}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          title={!input ? disabledReason : undefined}
+        >
           {label}
         </Button>
       </DropdownMenuTrigger>
