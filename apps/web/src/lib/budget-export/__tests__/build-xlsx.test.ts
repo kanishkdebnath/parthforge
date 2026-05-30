@@ -81,3 +81,47 @@ describe('buildXlsx — empty month', () => {
     expect(ws.getCell('A7').value).toBe(null);
   });
 });
+
+describe('buildXlsx — Targets sheet', () => {
+  it('renders caption, header, and rows sorted by group then category', async () => {
+    const wb = await loadWorkbook();
+    const ws = wb.getWorksheet('Targets')!;
+    expect(ws.getCell('A1').value).toBe('Currency: INR');
+    expect(ws.getRow(2).values).toEqual([
+      undefined, undefined, 'Group', 'Category', 'Kind', 'Target', 'Actual', 'Delta',
+    ]);
+    expect(ws.getCell('B3').value).toBe('Food');
+    expect(ws.getCell('C3').value).toBe('Eating out');
+    expect(ws.getCell('B4').value).toBe('Food');
+    expect(ws.getCell('C4').value).toBe('Groceries');
+    expect(ws.getCell('B5').value).toBe('Salary');
+    expect(ws.getCell('C5').value).toBe('Day job');
+  });
+
+  it('omits rows where both target and actual are zero', async () => {
+    const wb = await loadWorkbook(
+      makeInput({
+        targets: [
+          { groupName: 'Food', categoryName: 'Groceries', kind: 'expense', target: 0, actual: 0, delta: 0 },
+          { groupName: 'Salary', categoryName: 'Day job', kind: 'income', target: 1_000_00, actual: 0, delta: -1_000_00 },
+        ],
+      })
+    );
+    const ws = wb.getWorksheet('Targets')!;
+    expect(ws.getCell('B3').value).toBe('Salary');
+    expect(ws.getCell('B4').value).toBe(null);
+  });
+
+  it('renders two summary rows (income totals, expense totals)', async () => {
+    const wb = await loadWorkbook();
+    const ws = wb.getWorksheet('Targets')!;
+    expect(ws.getCell('A7').value).toBe('Income totals');
+    expect(ws.getCell('E7').value).toBe(1200);
+    expect(ws.getCell('F7').value).toBe(1000);
+    expect(ws.getCell('G7').value).toBe(-200);
+    expect(ws.getCell('A8').value).toBe('Expense totals');
+    expect(ws.getCell('E8').value).toBe(700);
+    expect(ws.getCell('F8').value).toBe(600);
+    expect(ws.getCell('G8').value).toBe(100);
+  });
+});
