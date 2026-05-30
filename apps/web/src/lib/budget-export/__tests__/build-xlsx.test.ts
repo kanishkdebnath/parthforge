@@ -125,3 +125,27 @@ describe('buildXlsx — Targets sheet', () => {
     expect(ws.getCell('G8').value).toBe(100);
   });
 });
+
+describe('buildXlsx — Recurring sheet', () => {
+  it('renders caption, header, and one row per template sorted by day of month', async () => {
+    const wb = await loadWorkbook(
+      makeInput({
+        recurring: [
+          { label: 'Internet', dayOfMonth: 15, amount: 999_00, applied: true },
+          { label: 'Rent', dayOfMonth: 1, amount: 30_000_00, applied: false },
+        ],
+      })
+    );
+    const ws = wb.getWorksheet('Recurring')!;
+    expect(ws.getCell('A1').value).toBe('Currency: INR');
+    expect(ws.getRow(2).values).toEqual([
+      undefined, 'Label', 'Day of Month', 'Amount', 'Applied?',
+    ]);
+    expect(ws.getCell('A3').value).toBe('Rent');
+    expect(ws.getCell('B3').value).toBe(1);
+    expect(ws.getCell('C3').value).toBe(30000);
+    expect(ws.getCell('D3').value).toBe('No');
+    expect(ws.getCell('A4').value).toBe('Internet');
+    expect(ws.getCell('D4').value).toBe('Yes');
+  });
+});
