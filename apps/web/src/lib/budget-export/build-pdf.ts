@@ -1,8 +1,13 @@
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import _autoTable from 'jspdf-autotable';
 import { formatMoney } from '../budget-formatting';
 import { formatSignedMoney } from './format';
 import type { BudgetExportInput } from './types';
+
+// Handle CJS/ESM interop: jspdf-autotable may export the function as .default
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const autoTable: (doc: jsPDF, opts: any) => void =
+  (typeof _autoTable === 'function' ? _autoTable : (_autoTable as any).default) as (doc: jsPDF, opts: any) => void;
 
 const PAGE_MARGIN = 40;
 
@@ -70,11 +75,72 @@ function drawNarrative(doc: jsPDF, narrative: string, topY: number): number {
   return topY + boxHeight + 16;
 }
 
+function drawGroupTables(doc: jsPDF, input: BudgetExportInput, topY: number): number {
+  let cursorY = topY;
+  for (const group of input.report.groups) {
+    const visible = group.categories.filter((c) => !(c.target === 0 && c.actual === 0));
+    if (visible.length === 0) continue;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(20);
+    doc.text(group.name, PAGE_MARGIN, cursorY + 14);
+
+    const kindLabel = group.kind === 'income' ? 'INCOME' : 'EXPENSE';
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(
+      kindLabel,
+      doc.internal.pageSize.getWidth() - PAGE_MARGIN,
+      cursorY + 14,
+      { align: 'right' }
+    );
+
+    autoTable(doc, {
+      startY: cursorY + 22,
+      head: [['Category', 'Target', 'Actual', 'Delta']],
+      body: [
+        ...visible.map((c) => [
+          c.name,
+          formatMoney(c.target, input.currency),
+          formatMoney(c.actual, input.currency),
+          formatSignedMoney(c.delta, input.currency),
+        ]),
+        [
+          { content: 'Subtotal', styles: { fontStyle: 'bold' } },
+          { content: formatMoney(group.target, input.currency), styles: { fontStyle: 'bold' } },
+          { content: formatMoney(group.actual, input.currency), styles: { fontStyle: 'bold' } },
+          { content: formatSignedMoney(group.delta, input.currency), styles: { fontStyle: 'bold' } },
+        ],
+      ],
+      headStyles: { fillColor: [240, 240, 240], textColor: 30, fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 80, halign: 'right' },
+        2: { cellWidth: 80, halign: 'right' },
+        3: { cellWidth: 80, halign: 'right' },
+      },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index === 3) {
+          const raw = String(data.cell.raw ?? '');
+          if (raw.startsWith('−')) data.cell.styles.textColor = [220, 38, 38];
+        }
+      },
+      margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
+      theme: 'grid',
+    });
+
+    cursorY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;
+  }
+  return cursorY;
+}
+
 export async function buildPdf(input: BudgetExportInput): Promise<Blob> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: false });
   drawPageHeader(doc, input.monthLabel);
   let y = 64;
   y = drawSummaryBand(doc, input, y);
   y = drawNarrative(doc, input.report.narrative, y);
+  y = drawGroupTables(doc, input, y);
   return doc.output('blob');
 }

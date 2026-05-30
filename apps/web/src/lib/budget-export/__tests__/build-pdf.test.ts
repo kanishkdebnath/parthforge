@@ -44,3 +44,35 @@ describe('buildPdf — summary and narrative', () => {
     expect(text).not.toContain('Income came in below target.');
   });
 });
+
+describe('buildPdf — group tables', () => {
+  it('renders a heading for each non-empty group', async () => {
+    const text = await pdfText();
+    expect(text).toContain('Salary');
+    expect(text).toContain('Food');
+  });
+
+  it('renders category rows with formatted amounts', async () => {
+    const text = await pdfText();
+    expect(text).toContain('Day job');
+    expect(text).toContain('Groceries');
+    expect(text).toContain('Eating out');
+  });
+
+  it('skips groups where every category has target=0 and actual=0', async () => {
+    const input = makeInput();
+    input.report.groups.push({
+      groupId: '64a000000000000000000003',
+      name: 'EmptyGroup',
+      kind: 'expense',
+      actual: 0,
+      target: 0,
+      delta: 0,
+      categories: [
+        { categoryId: '64a000000000000000000030', name: 'Nothing', actual: 0, target: 0, delta: 0 },
+      ],
+    });
+    const text = await pdfText(input);
+    expect(text).not.toContain('EmptyGroup');
+  });
+});
