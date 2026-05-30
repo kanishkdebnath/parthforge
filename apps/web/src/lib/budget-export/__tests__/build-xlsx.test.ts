@@ -33,7 +33,7 @@ describe('buildXlsx — Transactions sheet', () => {
     ]);
     expect(ws.getRow(2).font?.bold).toBe(true);
     expect(ws.views?.[0]?.state).toBe('frozen');
-    expect(ws.views?.[0]?.ySplit).toBe(2);
+    expect((ws.views?.[0] as ExcelJS.WorksheetViewFrozen | undefined)?.ySplit).toBe(2);
   });
 
   it('writes one row per transaction starting on row 3, sorted by date asc', async () => {
