@@ -76,3 +76,25 @@ describe('buildPdf — group tables', () => {
     expect(text).not.toContain('EmptyGroup');
   });
 });
+
+describe('buildPdf — recurring section', () => {
+  it('renders the recurring heading and rows', async () => {
+    const text = await pdfText();
+    expect(text).toContain('Recurring this month');
+    expect(text).toContain('Rent');
+  });
+
+  it('skips the recurring section entirely when no templates are due', async () => {
+    const input = makeInput();
+    input.report.recurringDue = [];
+    const text = await pdfText(input);
+    expect(text).not.toContain('Recurring this month');
+  });
+});
+
+describe('buildPdf — footer', () => {
+  it('renders a page counter on every page', async () => {
+    const text = await pdfText();
+    expect(text).toMatch(/Page 1 of \d+/);
+  });
+});
