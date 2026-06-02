@@ -11,7 +11,7 @@ import {
   CreateBudgetRecurringRequestSchema,
   UpdateBudgetRecurringRequestSchema,
   BulkUpsertTargetsRequestSchema,
-  BudgetReorderRequestSchema,
+  ReorderIdsRequestSchema,
   CategoryKindSchema,
   MonthStringSchema,
 } from '@pathforge/shared';
@@ -156,7 +156,7 @@ export async function budgetRoutes(app: FastifyInstance): Promise<void> {
     '/api/budget/groups/reorder',
     { preHandler: [app.authenticate] },
     async (request, reply) => {
-      const parsed = BudgetReorderRequestSchema.safeParse(request.body);
+      const parsed = ReorderIdsRequestSchema.safeParse(request.body);
       if (!parsed.success) return sendValidationError(reply, parsed.error);
       const userId = request.user!._id;
 

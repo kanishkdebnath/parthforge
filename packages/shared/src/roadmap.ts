@@ -81,10 +81,9 @@ export const UpdateStepRequestSchema = z.object({
 });
 export type UpdateStepRequest = z.infer<typeof UpdateStepRequestSchema>;
 
-export const ReorderRequestSchema = z.object({
-  ids: z.array(ObjectIdString).min(1),
-});
-export type ReorderRequest = z.infer<typeof ReorderRequestSchema>;
+// Reorder schema lives in `./reorder.ts` and is exported as
+// `ReorderIdsRequestSchema` — the per-feature `ReorderRequestSchema`
+// alias was removed when a third caller appeared.
 
 // Bulk import — accepts a full roadmap tree in a single request.
 // Used by POST /api/roadmaps/bulk and the "Import from LLM" frontend flow.

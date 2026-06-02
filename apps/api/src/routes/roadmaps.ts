@@ -7,7 +7,7 @@ import {
   UpdateMilestoneRequestSchema,
   CreateStepRequestSchema,
   UpdateStepRequestSchema,
-  ReorderRequestSchema,
+  ReorderIdsRequestSchema,
   BulkRoadmapRequestSchema,
 } from '@pathforge/shared';
 import { RoadmapModel } from '../models/Roadmap.js';
@@ -229,7 +229,7 @@ export async function roadmapsRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const { id } = request.params as { id: string };
       if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
-      const parsed = ReorderRequestSchema.safeParse(request.body);
+      const parsed = ReorderIdsRequestSchema.safeParse(request.body);
       if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
       const userId = request.user!._id;
 
@@ -352,7 +352,7 @@ export async function roadmapsRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const { id, mid } = request.params as { id: string; mid: string };
       if (!isValidId(id) || !isValidId(mid)) return reply.code(404).send({ error: 'Not found' });
-      const parsed = ReorderRequestSchema.safeParse(request.body);
+      const parsed = ReorderIdsRequestSchema.safeParse(request.body);
       if (!parsed.success) return reply.code(400).send({ error: 'Invalid body' });
       const userId = request.user!._id;
 

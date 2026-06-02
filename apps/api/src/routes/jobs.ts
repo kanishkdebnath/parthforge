@@ -8,7 +8,7 @@ import {
   UpdateRoundRequestSchema,
   CreateContactRequestSchema,
   UpdateContactRequestSchema,
-  ReorderRoundsRequestSchema,
+  ReorderIdsRequestSchema,
 } from '@pathforge/shared';
 import { JobApplicationModel } from '../models/JobApplication.js';
 import { serializeJobApplication } from '../lib/job-application-helpers.js';
@@ -290,7 +290,7 @@ export async function jobsRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const { id } = request.params as { id: string };
       if (!isValidId(id)) return reply.code(404).send({ error: 'Not found' });
-      const parsed = ReorderRoundsRequestSchema.safeParse(request.body);
+      const parsed = ReorderIdsRequestSchema.safeParse(request.body);
       if (!parsed.success) return sendValidationError(reply, parsed.error);
       const userId = request.user!._id;
 
