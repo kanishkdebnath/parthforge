@@ -3,6 +3,8 @@ import _autoTable, { type CellHookData } from 'jspdf-autotable';
 import { formatMoney } from '../budget-formatting';
 import { formatSignedMoney } from './format';
 import type { BudgetExportInput } from './types';
+import { NOTO_SANS_REGULAR_BASE64 } from './assets/fonts/noto-sans-regular';
+import { NOTO_SANS_BOLD_BASE64 } from './assets/fonts/noto-sans-bold';
 
 // jspdf-autotable v3.x can resolve as either a function (ESM) or an object with `default` (CJS interop).
 // Cover both so the same code works in Vitest (Node) and the Vite browser bundle.
@@ -13,11 +15,19 @@ const autoTable: typeof _autoTable =
 
 const PAGE_MARGIN = 40;
 
+function registerFonts(doc: jsPDF): void {
+  doc.addFileToVFS('NotoSans-Regular.ttf', NOTO_SANS_REGULAR_BASE64);
+  doc.addFileToVFS('NotoSans-Bold.ttf', NOTO_SANS_BOLD_BASE64);
+  doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+  doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+  doc.setFont('NotoSans', 'normal');
+}
+
 function drawPageHeader(doc: jsPDF, monthLabel: string): void {
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('NotoSans', 'bold');
   doc.setFontSize(11);
   doc.text('Pathforge Budget', PAGE_MARGIN, 36);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('NotoSans', 'normal');
   doc.text(monthLabel, doc.internal.pageSize.getWidth() - PAGE_MARGIN, 36, { align: 'right' });
   doc.setLineWidth(0.5);
   doc.line(PAGE_MARGIN, 44, doc.internal.pageSize.getWidth() - PAGE_MARGIN, 44);
@@ -47,12 +57,12 @@ function drawSummaryBand(doc: jsPDF, input: BudgetExportInput, topY: number): nu
     } else {
       doc.setTextColor(20);
     }
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('NotoSans', 'bold');
     doc.text(formatMoney(actual, input.currency), x, topY + 22);
   });
 
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('NotoSans', 'normal');
   doc.setTextColor(140);
   items.forEach(([, , target], i) => {
     const x = PAGE_MARGIN + i * colWidth;
@@ -83,20 +93,23 @@ function drawGroupTables(doc: jsPDF, input: BudgetExportInput, topY: number): nu
     const visible = group.categories.filter((c) => !(c.target === 0 && c.actual === 0));
     if (visible.length === 0) continue;
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('NotoSans', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(20);
     doc.text(group.name, PAGE_MARGIN, cursorY + 14);
 
-    const kindLabel = group.kind === 'income' ? 'INCOME' : 'EXPENSE';
-    doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text(
-      kindLabel,
-      doc.internal.pageSize.getWidth() - PAGE_MARGIN,
-      cursorY + 14,
-      { align: 'right' }
-    );
+    const nameMatchesKind = group.name.trim().toLowerCase() === group.kind;
+    if (!nameMatchesKind) {
+      const kindLabel = group.kind === 'income' ? 'INCOME' : 'EXPENSE';
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text(
+        kindLabel,
+        doc.internal.pageSize.getWidth() - PAGE_MARGIN,
+        cursorY + 14,
+        { align: 'right' }
+      );
+    }
 
     autoTable(doc, {
       startY: cursorY + 22,
@@ -115,12 +128,13 @@ function drawGroupTables(doc: jsPDF, input: BudgetExportInput, topY: number): nu
           { content: formatSignedMoney(group.delta, input.currency), styles: { fontStyle: 'bold' } },
         ],
       ],
-      headStyles: { fillColor: [240, 240, 240], textColor: 30, fontStyle: 'bold' },
+      styles: { font: 'NotoSans' },
+      headStyles: { fillColor: [240, 240, 240], textColor: 30, fontStyle: 'bold', font: 'NotoSans' },
       columnStyles: {
         0: { cellWidth: 'auto' },
-        1: { cellWidth: 80, halign: 'right' },
-        2: { cellWidth: 80, halign: 'right' },
-        3: { cellWidth: 80, halign: 'right' },
+        1: { cellWidth: 95, halign: 'right' },
+        2: { cellWidth: 95, halign: 'right' },
+        3: { cellWidth: 95, halign: 'right' },
       },
       didParseCell: (data: CellHookData) => {
         if (data.section === 'body' && data.column.index === 3) {
@@ -141,7 +155,7 @@ function drawRecurring(doc: jsPDF, input: BudgetExportInput, topY: number): numb
   const recurring = input.report.recurringDue;
   if (recurring.length === 0) return topY;
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('NotoSans', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(20);
   doc.text('Recurring this month', PAGE_MARGIN, topY + 14);
@@ -154,11 +168,12 @@ function drawRecurring(doc: jsPDF, input: BudgetExportInput, topY: number): numb
       String(r.dayOfMonth),
       formatMoney(r.amount, input.currency),
     ]),
-    headStyles: { fillColor: [240, 240, 240], textColor: 30, fontStyle: 'bold' },
+    styles: { font: 'NotoSans' },
+    headStyles: { fillColor: [240, 240, 240], textColor: 30, fontStyle: 'bold', font: 'NotoSans' },
     columnStyles: {
       0: { cellWidth: 'auto' },
       1: { cellWidth: 60, halign: 'right' },
-      2: { cellWidth: 100, halign: 'right' },
+      2: { cellWidth: 110, halign: 'right' },
     },
     margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
     theme: 'grid',
@@ -188,6 +203,7 @@ function drawFooters(doc: jsPDF): void {
 
 export async function buildPdf(input: BudgetExportInput): Promise<Blob> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: false });
+  registerFonts(doc);
   drawPageHeader(doc, input.monthLabel);
   let y = 64;
   y = drawSummaryBand(doc, input, y);
