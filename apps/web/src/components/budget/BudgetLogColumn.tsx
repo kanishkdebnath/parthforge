@@ -7,6 +7,7 @@ import type {
   CategoryKind,
 } from '@pathforge/shared';
 import { BudgetTransactionRow } from './BudgetTransactionRow';
+import { BudgetEmptyHint } from './BudgetEmptyHint';
 import { formatMoney } from '@/lib/budget-formatting';
 
 interface Props {
@@ -92,9 +93,10 @@ export function BudgetLogColumn({
         </div>
       </div>
       {groupedRows.length === 0 ? (
-        <div className="text-sm text-slate-500 dark:text-slate-400 py-4">
-          {kind === 'income' ? 'No incomes this month.' : 'No expenses this month.'}
-        </div>
+        <BudgetEmptyHint
+          heading={kind === 'income' ? 'No incomes this month' : 'No expenses this month'}
+          hint={`Use the input above to log ${kind === 'income' ? 'an income' : 'an expense'}.`}
+        />
       ) : (
         <div className="space-y-3">
           {groupedRows.map(({ group, cats }) => (
