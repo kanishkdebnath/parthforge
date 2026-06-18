@@ -128,6 +128,15 @@ export function useArchiveBudgetGroup(id: string) {
   });
 }
 
+/**
+ * Reorders the user's groups. Updates the cache optimistically so the
+ * drag-released position is reflected immediately — without this, the
+ * UI snaps back to the pre-drag order until the server round-trip lands.
+ *
+ * The server's reorder response only contains non-archived groups, so on
+ * success we invalidate (re-fetch the full list including archived)
+ * rather than overwriting the cache with the partial response.
+ */
 export function useReorderBudgetGroups() {
   const qc = useQueryClient();
   return useMutation({
@@ -135,11 +144,35 @@ export function useReorderBudgetGroups() {
       const res = await api.patch('/budget/groups/reorder', { ids });
       return res.data;
     },
-    onSuccess: (fresh) => {
-      qc.setQueryData(GROUPS_KEY, fresh);
+    onMutate: async (ids) => {
+      await qc.cancelQueries({ queryKey: GROUPS_KEY });
+      const prev = qc.getQueryData<BudgetCategoryGroup[]>(GROUPS_KEY);
+      if (!prev) return { prev };
+      const idsSet = new Set(ids);
+      const byId = new Map(prev.map((g) => [g._id, g]));
+      // Reorder the non-archived subset per the dragged order, bumping
+      // `order` so any consumer that sorts by it stays correct. Archived
+      // groups (and any unexpected non-matching ones) keep their position
+      // after the reordered block.
+      const reordered = ids.flatMap((id, idx) => {
+        const g = byId.get(id);
+        return g ? [{ ...g, order: idx }] : [];
+      });
+      const others = prev.filter((g) => !idsSet.has(g._id));
+      qc.setQueryData<BudgetCategoryGroup[]>(GROUPS_KEY, [...reordered, ...others]);
+      return { prev };
+    },
+    onError: (err, _ids, ctx) => {
+      if (ctx?.prev) qc.setQueryData(GROUPS_KEY, ctx.prev);
+      toastError('Could not reorder groups', err);
+    },
+    onSuccess: () => {
+      // Invalidate (not setQueryData(fresh)) — the server only returns
+      // non-archived groups, so a direct overwrite would silently drop
+      // archived ones from the cache.
+      qc.invalidateQueries({ queryKey: GROUPS_KEY });
       qc.invalidateQueries({ queryKey: REPORT_PREFIX });
     },
-    onError: (err) => toastError('Could not reorder groups', err),
   });
 }
 
@@ -218,6 +251,16 @@ export function useArchiveBudgetCategory(id: string) {
   });
 }
 
+/**
+ * Reorders categories within a single group. Because `useBudgetCategories`
+ * is parameterized by `{ groupId, kind }` filters, there can be multiple
+ * cache entries holding overlapping category lists. The optimistic update
+ * walks every cache entry under the CATEGORIES_KEY prefix and rebuilds the
+ * affected subset in each — preserving categories that belong to other
+ * groups (or that are archived) at their current relative positions.
+ *
+ * On error the snapshot for each cache entry is restored.
+ */
 export function useReorderBudgetCategories(groupId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -228,11 +271,48 @@ export function useReorderBudgetCategories(groupId: string) {
       });
       return res.data;
     },
+    onMutate: async (ids) => {
+      await qc.cancelQueries({ queryKey: CATEGORIES_KEY });
+      const idsSet = new Set(ids);
+      const entries = qc.getQueriesData<BudgetCategory[]>({
+        queryKey: CATEGORIES_KEY,
+      });
+      const snapshots: Array<[readonly unknown[], BudgetCategory[]]> = [];
+      for (const [key, data] of entries) {
+        if (!data) continue;
+        snapshots.push([key, data]);
+        const byId = new Map(
+          data
+            .filter((c) => c.groupId === groupId && idsSet.has(c._id))
+            .map((c) => [c._id, c])
+        );
+        const reordered = ids.flatMap((id, idx) => {
+          const c = byId.get(id);
+          return c ? [{ ...c, order: idx }] : [];
+        });
+        // Keep anything not in the reorder set (other groups, archived
+        // categories in this group) at its existing position; append the
+        // reordered subset at the end. The UI re-filters per group, so
+        // intra-group order comes from the reordered block.
+        const rest = data.filter(
+          (c) => !(c.groupId === groupId && idsSet.has(c._id))
+        );
+        qc.setQueryData<BudgetCategory[]>(key, [...rest, ...reordered]);
+      }
+      return { snapshots };
+    },
+    onError: (err, _ids, ctx) => {
+      if (ctx?.snapshots) {
+        for (const [key, data] of ctx.snapshots) {
+          qc.setQueryData(key, data);
+        }
+      }
+      toastError('Could not reorder categories', err);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: CATEGORIES_KEY });
       qc.invalidateQueries({ queryKey: REPORT_PREFIX });
     },
-    onError: (err) => toastError('Could not reorder categories', err),
   });
 }
 
